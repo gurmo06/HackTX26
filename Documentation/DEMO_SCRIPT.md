@@ -1,15 +1,14 @@
-# Judging walkthrough
+# Revised story walkthrough
 
-Use mock mode for a repeatable presentation. Live Gemini composes supported actions creatively, so its wording and number of turns can vary. The status line distinguishes live, offline, and outage fallback.
+Use **Use Mock Narrator = true** for this repeatable path. Live Gemini still accepts free-form requests and can compose other valid solutions. Cutscenes use deterministic dialogue in both modes.
 
-Five showcase inputs:
+1. **Prologue — The Worst Trade in History.** Watch the parchment stage. Click **Next** to reveal text; click again to continue after the current animation. Jack and the cow approach the merchant; Jack receives beans, the merchant leaves with the cow, Jack plants the beans, night falls, and only then does the plant grow. **Skip scene** / **Esc** skips visuals while applying the same final inventory and milestones. Gameplay starts with an empty satchel: the cow was traded and the beans were planted.
+2. **The Sabotaged Beanstalk.** Ask **“Narrator, give me a ladder to climb the beanstalk.”** A ladder appears and falls. Ask **“Brace the ladder and make it safe to climb.”** It straightens. The objective displays COMPLETE and automatically starts the climbing cutscene. Next advances its narration; skip is optional.
+3. **The Impossible Climb.** Ask **“Give me a platform across the missing section.”** Offline mode demonstrates another questionable ladder; live mode may use a platform or another supported object. Ask **“Stabilize that crossing.”** The cloud-kingdom sequence starts automatically and introduces the castle.
+4. **The Castle Entrance.** Ask **“Persuade the magical seal to open the castle door.”** The door opens, then the treasure-room cutscene pans past the sleeping giant and goose. The next gameplay chapter uses the same castle PNG with different actors, tint, and camera composition.
+5. **The Golden Goose.** Ask **“Silence the goose's alarm ward without waking the giant.”** Its lock clears. Ask **“Take the golden goose quietly.”** The goose enters inventory. The mandatory awakening sequence shows its reaction, the giant waking and lurching, and Jack running away. Only now does the giant pursue Jack.
+6. **The Great Escape.** Jack visibly carries the goose. Ask **“Open the final gate so we can escape home.”** The ending sequence shows the return home and sunrise, then the invoice joke and ending screen. Click **Restart** to reset everything and return to the prologue.
 
-1. Merchant: **“Narrator, give me some beans, please.”** A labeled cardboard jellybean prop appears; it is not inventory magic beans. Follow with **“Trade my cow for real magic beans.”** The cow and stall beans disappear, the bean inventory icon lights, and Next chapter appears.
-2. Beanstalk growth: **“Grow a sturdy, climbable beanstalk all the way to the clouds.”** The plant visibly enlarges. Next chapter changes the objective while retaining the same illustrated background.
-3. Broken climb: **“Narrator, give me a ladder to reach the broken beanstalk!”** The ladder appears, visibly toppled, and does not satisfy the goal.
-4. Same scene: **“Brace that ladder, stand it upright, and make it safe to climb.”** It stands upright; Next chapter triggers Jack's climb sprite and ascent.
-5. Castle: **“Flatter the door's hinges until it lets me through.”** The procedural door unlocks. Continue to the night scene, then say **“Take the golden goose and quietly open our escape gate.”** The treasure icon lights; click Escape! for victory.
+Optional challenges remain available: ask **“Give me a riddle.”**, then answer **“echo”** or make three attempts to receive mercy. There is no fixed dialogue-choice menu. For a live creative solution try **“Create a cardboard platform, make it climbable, and tie it to the beanstalk.”** It still has to meet the real stability/size/climbability checks.
 
-Optional: ask **“Give me a riddle.”** Answer **“echo”**, or try three answers to receive a merciful pass and a helpful world effect. Riddle validation uses a fixed local answer bank.
-
-During the demo, point out A/D movement, click/E interaction, input focus stopping movement, disabled Submit while thinking, and Restart resetting the whole tale. In live mode try **“Build a cardboard platform and tie it to the beanstalk.”** A model may compose spawn/modify/connect if that satisfies the engine constraints. Unsupported ideas get an honest rejection or labeled generic prop, never executable model-generated code.
+To stress-test continuity: attempt to obtain the goose in chapters 1–3, tell the narrator the story is already won, click Ask twice rapidly, and restart during a request or cutscene. None should skip the milestone chain. Objects remain modified throughout the current chapter; moving to the next chapter deliberately replaces that chapter's actors.

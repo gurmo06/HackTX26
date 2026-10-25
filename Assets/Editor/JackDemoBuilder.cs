@@ -43,6 +43,7 @@ public static class JackDemoBuilder
         var body=TMP_Settings.GetFontAsset();
         if(!body) throw new InvalidOperationException("TMP Essentials are missing. Use Window > TextMeshPro > Import TMP Essential Resources, click Import, then run Tools > Jack > Create or Refresh Demo Scene again.");
         if(!Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+        BackupScene();
         Directory.CreateDirectory(Generated); Directory.CreateDirectory("Assets/Scenes"); AssetDatabase.Refresh();
         var art=LoadOrCreate<ArtCatalog>(Generated+"/ArtCatalog.asset");
         var entries=new List<ArtEntry>();
@@ -96,12 +97,65 @@ public static class JackDemoBuilder
         game.executor.world=game.world; game.executor.levels=game.levels; game.executor.inventory=game.inventory; game.executor.challenges=game.challenges;
         game.ui.game=game;
         BuildUI(root.transform,game,art);
+        WireStory(game);
         var events=Child("EventSystem",root.transform); events.AddComponent<EventSystem>(); events.AddComponent<InputSystemUIInputModule>().AssignDefaultActions();
         EditorSceneManager.MarkSceneDirty(scene); EditorSceneManager.SaveScene(scene,ScenePath);
         var scenes=EditorBuildSettings.scenes.ToList(); if(!scenes.Any(s=>s.path==ScenePath)) { scenes.Add(new EditorBuildSettingsScene(ScenePath,true)); EditorBuildSettings.scenes=scenes.ToArray(); }
         Selection.activeGameObject=managerGO;
         Debug.Log("JackGame created/refreshed. Runtime actors populate on Play. Art: 29/29. UseMockNarrator="+mock+". See Documentation/UNITY_MANUAL_STEPS.md.");
     }
+    [MenuItem("Tools/Jack/Upgrade Story and Cutscenes")]
+    public static void UpgradeStory()
+    {
+        if(EditorApplication.isPlayingOrWillChangePlaymode) { Debug.LogError("Stop Play mode before upgrading the story."); return; }
+        if(!File.Exists(ScenePath)) throw new InvalidOperationException("JackGame is missing. Use Tools > Jack > Create or Refresh Demo Scene first.");
+        if(!Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+        BackupScene();
+        var scene=SceneManager.GetSceneByPath(ScenePath);
+        if(!scene.IsValid() || !scene.isLoaded) scene=EditorSceneManager.OpenScene(ScenePath,OpenSceneMode.Single);
+        var game=scene.GetRootGameObjects().SelectMany(root=>root.GetComponentsInChildren<GameManager>(true)).FirstOrDefault();
+        if(!game || !game.ui || !game.world || !game.world.art) throw new InvalidOperationException("Existing GameManager wiring is incomplete; restore the scene backup or run Create or Refresh Demo Scene.");
+        WireStory(game);
+        EditorSceneManager.MarkSceneDirty(scene); EditorSceneManager.SaveScene(scene,ScenePath);
+        Selection.activeGameObject=game.gameObject;
+        Debug.Log("Story upgrade complete. Existing gameplay/UI objects and API settings were preserved. A scene backup is in Documentation/SceneBackups.");
+    }
+    static void BackupScene()
+    {
+        if(!File.Exists(ScenePath)) return;
+        Directory.CreateDirectory("Documentation/SceneBackups");
+        var path="Documentation/SceneBackups/JackGame-"+DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fffffff")+".unity";
+        File.Copy(ScenePath,path,false);
+        Debug.Log("Before scene changes, saved backup: "+path);
+    }
+    static void WireStory(GameManager game)
+    {
+        game.story=game.GetComponent<StoryState>() ?? game.gameObject.AddComponent<StoryState>();
+        game.cutscenes=game.GetComponent<CutsceneDirector>() ?? game.gameObject.AddComponent<CutsceneDirector>();
+        game.cutscenes.game=game; game.levels.story=game.story;
+        var ui=game.ui; var art=game.world.art;
+        foreach(var path in ArtPaths) if(!art.Get(Path.GetFileNameWithoutExtension(path)))
+            throw new InvalidOperationException("Missing sprite reference in ArtCatalog: Assets/Art/"+path+". Restore the sprite/reference before upgrading.");
+        var canvas=ui.input.GetComponentInParent<Canvas>();
+        if(!canvas) throw new InvalidOperationException("Narrator input must belong to the existing Canvas.");
+        if(!ui.storyFade) {
+            var existing=canvas.transform.Find("Story fade");
+            ui.storyFade=existing ? existing.GetComponent<Image>() : Panel("Story fade",canvas.transform,null,0,0,1,1,Color.clear);
+            ui.storyFade.raycastTarget=false; ui.storyFade.transform.SetAsFirstSibling();
+        }
+        if(!ui.skipCutscene) ui.skipCutscene=FindOrAddButton("Skip cutscene",canvas.transform,"Skip scene",art,.56f,.39f,.19f,.065f);
+        if(!ui.revealText) ui.revealText=FindOrAddButton("Reveal narration",canvas.transform,"Show text",art,.56f,.39f,.19f,.055f);
+        ui.skipCutscene.gameObject.SetActive(false); ui.revealText.gameObject.SetActive(false);
+        ui.submit.GetComponentInChildren<TMP_Text>(true).text="Ask";
+        ui.next.GetComponentInChildren<TMP_Text>(true).text="Next"; ui.next.gameObject.SetActive(false);
+        ui.objective.text="PROLOGUE · The Worst Trade in History";
+        ui.lastRequest.text="Next continues narration · Skip scene preserves story progress";
+        ui.dialogue.text="Jack's family had an empty cupboard, an overdue rent bill, and one cow.";
+        EditorUtility.SetDirty(game); EditorUtility.SetDirty(game.levels); EditorUtility.SetDirty(ui); EditorUtility.SetDirty(game.cutscenes);
+    }
+    static Button FindOrAddButton(string name,Transform canvas,string label,ArtCatalog art,float x,float y,float w,float h)
+    { var existing=canvas.Find(name); return existing ? existing.GetComponent<Button>() : Button(name,canvas,label,art,x,y,w,h); }
+
     static bool ExactFileExists(string path)
     {
         string current=".";

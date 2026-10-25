@@ -24,26 +24,26 @@ namespace JackGame
             new EnvironmentDefinition("night", "04_NightEscape")
         };
         public static readonly LevelDefinition[] Beats = {
-            new LevelDefinition { id="merchant", environment=0, objective="1 / 5 · Negotiate for magic beans", introduction="Once upon a time, Jack decided to trade his cow. A terrible business decision, if you ask me.", actors=new[] {
-                new ActorDefinition("stall","stall","market_stall","Market stall",3.8f,-0.2f,2.4f),
-                new ActorDefinition("merchant","npc","merchant","Merchant · click or E",2.3f,-0.6f,2.2f),
-                new ActorDefinition("cow","cow","cow","Your bargaining chip",-4.4f,-0.6f,1.7f),
-                new ActorDefinition("beans","beans","BeanIcon","Magic beans",4.1f,0.5f,0.65f) } },
-            new LevelDefinition { id="grow", environment=1, objective="2 / 5 · Grow a sturdy, climbable beanstalk", introduction="The beans are planted. Now convince this botanical underachiever to grow.", actors=new[] {
-                new ActorDefinition("beanstalk","beanstalk","beanstalk_segment","Planted beanstalk",1,-0.5f,1.5f),
-                new ActorDefinition("cloud","platform","cloud_platform","Cloud landing",3,2.5f,0.7f) } },
-            new LevelDefinition { id="climb", environment=1, objective="3 / 5 · Bridge the gap with a stable climbing aid", introduction="Splendid growth. Shame about the missing middle. Ask for a ladder, rope, or your own absurd solution.", actors=new[] {
-                new ActorDefinition("beanstalk","beanstalk","beanstalk_segment","Broken beanstalk",1,0,3),
-                new ActorDefinition("cloud","platform","cloud_platform","Cloud landing",3,2.5f,0.7f) } },
-            new LevelDefinition { id="castle", environment=2, objective="4 / 5 · Unlock the door or build a way around it", introduction="A giant door. A giant ego. Surely one of them can be persuaded to open.", actors=new[] {
-                new ActorDefinition("giant","giant","giant","Giant · click or E",4.3f,0,3.6f),
-                new ActorDefinition("door","door","","Castle door · locked",1.3f,-0.2f,2.6f),
-                new ActorDefinition("castle","castle","cloud_castle","Cloud castle",-4,1,1.8f) } },
-            new LevelDefinition { id="escape", environment=3, objective="5 / 5 · Take the goose and open an escape route", introduction="One golden goose, one sleeping giant, and absolutely no sensible decisions. Bring the goose home.", actors=new[] {
-                new ActorDefinition("giant","giant","giant","Sleeping giant",4.3f,0,3.4f),
-                new ActorDefinition("goose","goose","golden_goose","Golden goose · click or E",1,-0.6f,1.3f),
-                new ActorDefinition("egg","egg","golden_egg","Golden egg",2,-1,0.6f),
-                new ActorDefinition("exit","door","","Escape gate · locked",-4,-0.1f,2.4f) } }
+            new LevelDefinition { id="sabotaged", environment=0, objective="1 / 5 · The Sabotaged Beanstalk — secure a climbing route", introduction="The beanstalk has grown. I have made it somewhat less attached to the ground. Ask for a safe way up.", actors=new[] {
+                new ActorDefinition("beanstalk","beanstalk","beanstalk_segment","Unstable beanstalk",1,0,3.2f),
+                new ActorDefinition("cottage","castle","cottage","Home",-4,.1f,2),
+                new ActorDefinition("stone","stone","stone_block","Anchor stone",3,-.5f,.7f) } },
+            new LevelDefinition { id="climb", environment=1, objective="2 / 5 · The Impossible Climb — bridge the missing section", introduction="Halfway to the clouds, Jack discovered my architectural innovation: a gap. Build a stable way across.", actors=new[] {
+                new ActorDefinition("beanstalk","beanstalk","beanstalk_segment","Broken beanstalk",-1,0,3),
+                new ActorDefinition("cloud","platform","cloud_platform","Far side of the gap",3,1.6f,.7f) } },
+            new LevelDefinition { id="castle", environment=2, objective="3 / 5 · The Castle Entrance — break the magical seal", introduction="The giant's entrance is magically sealed. Compliments, clever contraptions, and loopholes are all acceptable forms of entry.", actors=new[] {
+                new ActorDefinition("door","door","","Sealed castle door",1.3f,-.2f,2.6f),
+                new ActorDefinition("castle","castle","cloud_castle","The giant's castle",-4,1,1.8f),
+                new ActorDefinition("crate","crate","crate","Abandoned crate",4,-.5f,.9f) } },
+            new LevelDefinition { id="treasure", environment=2, objective="4 / 5 · The Golden Goose — silence its ward and take it quietly", introduction="The giant sleeps beside the golden goose. Silence the goose's alarm ward before taking it. I suggest avoiding a brass band.", actors=new[] {
+                new ActorDefinition("giant","giant","giant","Sleeping giant",4.4f,.2f,3.4f),
+                new ActorDefinition("goose","goose","golden_goose","Goose · alarm ward",.5f,-.5f,1.2f),
+                new ActorDefinition("treasure","egg","golden_egg_sack","Giant's treasure",-2,-.5f,1),
+                new ActorDefinition("crate","crate","crate","Soft landing crate",-4,-.5f,.8f) } },
+            new LevelDefinition { id="escape", environment=3, objective="5 / 5 · The Great Escape — open the route home", introduction="Goose secured. Giant furious. The final gate is stuck. Open it, or build a stable crossing before he reaches us.", actors=new[] {
+                new ActorDefinition("giant","giant","giant","The pursuing giant",5,.1f,3.4f),
+                new ActorDefinition("exit","door","","Blocked route home",-4,-.1f,2.4f),
+                new ActorDefinition("stone","stone","stone_block","Fallen stone",1,-.5f,.8f) } }
         };
     }
 }

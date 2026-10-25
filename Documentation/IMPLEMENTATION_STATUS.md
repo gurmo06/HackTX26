@@ -1,38 +1,40 @@
-# Implementation status
+# Current implementation status — story continuity update
+
+The existing game was extended in place. The merchant/growth gameplay pair is now a deterministic prologue, followed by five playable chapters and their connecting sequences. The existing narrator HTTP client, Gemini handler, action response DTOs, art, fonts, URP assets and Unity package versions were preserved.
 
 ## Completed
 
-- [x] Inspected the existing Unity 6000.6.7f1 Universal 2D project, URP 17.6.0, Input System 1.20.1, UGUI/TMP 2.6.0, and Test Framework 1.8.0.
-- [x] Verified all 29 exact art paths, including four 1672 x 941 illustrated backgrounds. No missing requested PNGs.
-- [x] Preserved existing scenes, URP assets, Unity package versions, plugin code, and existing metadata. The builder uses importer APIs to configure supplied PNGs and preserves their GUIDs.
-- [x] Added typed request/response DTOs, entity snapshots, inventory, bounded generic actions, reference/goal validation, and fixed local challenges.
-- [x] Implemented four environments / five narrative beats, shared beanstalk backdrop, the complete deterministic offline story, fallen/stabilized ladder, growth, merchant trade, castle gate, goose escape, victory, and restart.
-- [x] Added bounded Jack movement, two-frame walking animation, ascent sprite, keyboard/click/touch interactions, input-focus handling, request locking, stale-response protection, short memory, and mercy hints/actions.
-- [x] Added the idempotent dedicated scene builder and fully wired TMP parchment HUD, scrollable long narration, title/objective/inventory widgets, Next/restart controls, and text-only Narrator heading.
-- [x] Downloaded Pixelify Sans and its OFL license from the official Google Fonts repository; builder generates the TMP heading font and has an explicit readable fallback.
-- [x] Implemented Gemini and Netlify backend, shared validated contract, structured JSON output, bounded payloads/actions/tokens/retries, same-origin/local-dev CORS, platform and instance rate limits, private server environment configuration, and offline fallback.
-- [x] Wrote Unity Editor instructions, backend/deployment instructions, and demo walkthrough.
-- [x] Performed code, backend, asset regression, function bundling, localhost HTTP, and isolated Unity tests.
+- [x] Inspected the existing scene, builder, progression, narrator client/backend, inventory and action executor before modifying them.
+- [x] Added the ordered story milestone ledger and aligned client/server chapter and actor definitions.
+- [x] Implemented a parchment-only pre-growth prologue: approach, trade, merchant/cow departure, return home, planting, night and growth.
+- [x] Revised gameplay order: sabotaged beanstalk → impossible climb → castle entrance → golden goose → great escape.
+- [x] Added all six cutscenes through one reusable sequencer: prologue, climbing, cloud kingdom, treasure room, awakening and ending.
+- [x] Added eased movement, sprite swapping, anchored cutout animation, breathing/hops/sway, growth, camera pans/zoom, fades, screen shake and object appearance/removal effects.
+- [x] Added Next, Skip scene, optional typewriter/reveal controls, automatic objective transitions and an updated ending screen.
+- [x] Enforced the inventory timeline: receive then plant beans; quiet goose acquisition only in the treasure chapter; giant pursuit only after awakening; victory only after the final ending.
+- [x] Preserved world changes between requests within the current chapter, request deduplication, stale-response cancellation, live/free-form Gemini gameplay, fixed challenges and outage fallback.
+- [x] Added a non-destructive story-upgrade menu that preserves existing scene/UI/API references and makes a scene backup. The full builder also supports the revised story and makes backups.
+- [x] Updated Unity/backend tests, curl fixture, demo script, Editor instructions, deployment compatibility notes and change summary.
 
 ## Executed verification
 
-- `npm test`: **10/10 passed**. Includes schema limits, HTTP errors/CORS, offline/live opt-in, structured model configuration, transient retry and permanent-error fallback, invalid actor references, sequential action composition, all five goal gates, protected actors, challenge validation, rate limits, and C#/JS field parity. Model calls were injected test doubles; no API key was used.
-- `python3 scripts/check-csharp.py`: gameplay and builder C# compile against the actual installed Unity/UGUI/Input System/URP references. Also compiled through Unity's own assembly pipeline in a temporary project copy.
-- Unity Test Runner in an isolated copy with TMP Essentials: **2/2 passed** — `SceneBuilderIsIdempotentAndWired` and `OfflineStoryReachesVictoryAndRestarts`. The latter actually enters Play mode and checks jellybean twist, trade/inventory, growth, shared backdrop, fallen ladder, stabilization, ascent/transition, castle unlock, goose escape, victory, restart, double-submit prevention, unknown-ID rejection, and cancellation after restart.
-- Final sprite-alpha importer change: reran the isolated builder test, **1/1 passed**. NUnit evidence is saved in `Documentation/Verification/UnityResults.xml` and `BuilderFinalResults.xml`.
-- The first Unity test run exposed a missing-TMP null access; fixed with a null-safe check and a precise import error. An inactive Next-label lookup was also fixed before the passing run. These are resolved issues, not outstanding setup blockers.
-- Netlify bundling (`@netlify/zip-it-and-ship-it`, esbuild) produced one `narrate.zip` function successfully.
-- Actual `netlify dev --offline` started locally and loaded narrate. `curl` POST to `http://localhost:8888/api/narrate` returned **HTTP 200** and the expected typed offline response. This verifies local routing and backend loading, not a live Gemini call.
-- Exact asset/case audit: **29/29**, four backgrounds. Legacy dependency scan of added scripts/tests/docs: **zero forbidden references**. Generated scene contains the text Narrator heading and parchment UI. No generated executable model code or client API key exists.
-- Production `npm audit --omit=dev`: **0 advisories**. Compatible fixes applied to development tooling; current Netlify CLI still has two high findings through its development-only `toml` parser. No forced breaking downgrade was applied.
+- **12/12 Node tests passed**: request/response validation, HTTP errors/CORS, opt-in and outage fallback, structured model configuration, retry bounds, action sequencing, all revised goals, protected actors/items, milestone consistency, rate limits, C#/JS DTO parity, and identical chapter/actor/milestone definitions.
+- **Unity tests in an isolated project copy:** scene upgrade preservation/idempotence, watched story to victory, and skip/restart/state restoration all passed. The harness uses standard Play-mode reload while running and restores the project's previous setting afterward. Final consolidated NUnit output is saved as `Documentation/Verification/StoryResults.xml`.
+- **Graphics-enabled Unity smoke test:** the watched-story test passed. Batch screenshot capture did not produce usable review images; this does not establish visual layout quality or interactive mouse/touch feel.
+- **C# compile check:** `python3 scripts/check-csharp.py` passed against installed Unity assemblies. Unity also compiled the updated assembly definitions and scripts during the test runs.
+- **Backend fixture:** the revised `sabotaged-request.json` passed schema validation and returned HTTP 200 / `offline` through the actual handler without credentials.
+- **Function bundling:** the updated Netlify function bundles with esbuild. No paid model request or publication is involved.
+- All story sprite keys resolve to the existing 29-entry art catalog. No new image/font/package dependency was introduced. New code/UI does not add narrator artwork or change the existing text heading.
 
-## Requires manual verification/configuration
+## Manual verification/configuration still required
 
-- The user's open Unity project was not closed or remotely controlled. Scene generation and Play-mode tests ran in a **temporary copy**, so run the builder in your actual Editor after importing TMP Essentials. No JackGame scene is silently copied back with potentially conflicting Unity GUIDs.
-- Tests ran with a headless graphics device. Actual visual appearance, font rendering, mouse/touch feel, and 16:9 / 4:3 / narrow viewport legibility require the Editor Game-view checks in `UNITY_MANUAL_STEPS.md`.
-- Live Gemini requires your private key, available model and quota; no paid/provider request was made.
-- No Web player was exported, no Netlify site was published, and no deployed browser session was tested. These are explicitly manual build/account actions in the documentation.
+- Your open Editor and actual `JackGame.unity` were not replaced during testing. Run **Tools > Jack > Upgrade Story and Cutscenes** in the real project, then save. The upgrade automatically backs up the previous scene and adds the new references.
+- Watch the animations at normal speed in Game view and check 16:9, 4:3 and narrow layouts, scrolling text, mouse/touch, keyboard controls and typewriter pacing. Automated Play-mode tests execute the motion/state logic but do not replace this visual check.
+- Retest live Gemini with your private existing key/model/quota. Backend tests use injected model replies; the cutscenes themselves require no API.
+- Rebuild the Web player and deploy it together with the updated backend. No new Web export, browser session, or hosted deployment was performed in this update.
 
-## Deliberate MVP limits
+## Scope limits
 
-Generic objects use labeled cardboard, supplied sprites, and best-effort line connections; there is no generative art, physics rope simulation, runtime code execution, full platforming system, or multiplayer authority. Offline mode is a deterministic demonstration with forgiving phrases; live mode uses the model to compose the engine actions. Mandatory story actors are protected from destructive transformations. Session/state snapshots and instance counters are not a global anti-cheat or billing system. No narrator artwork is required.
+No required story sequence is left as a placeholder. This remains a narrative puzzle with bounded movement and generic world actions, not a physics platformer or lethal timed chase. Pursuit is staged through the awakening sequence and escape setting. Page-turn transitions were optional and were not added; fades and pans provide transitions. Client snapshots remain non-authoritative at the server boundary; the actual Unity scene and local milestone ledger independently enforce progression.
+
+For exact actions and a full walkthrough, see `UNITY_MANUAL_STEPS.md`, `STORY_UPDATE.md`, `DEMO_SCRIPT.md` and `DEPLOYMENT.md`. Older NUnit XML files in Verification describe the previous implementation; StoryResults is the evidence for this revision.

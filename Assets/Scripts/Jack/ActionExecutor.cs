@@ -14,7 +14,10 @@ namespace JackGame
         static string Label(string text) => string.IsNullOrWhiteSpace(text) ? "Cardboard curiosity" : text.Substring(0,Math.Min(48,text.Length)).Replace("<","").Replace(">","");
         public bool Apply(GameAction a)
         {
+            if(levels.CinematicCamera || !levels.story || !levels.story.CanEnter(levels.Beat)) return false;
             if(a==null || string.IsNullOrEmpty(a.type) || float.IsNaN(a.numberValue) || float.IsInfinity(a.numberValue)) return false;
+            // Story inventory cannot be conjured early, even as a transformed world prop.
+            if((a.type=="spawn" || a.type=="transform") && (a.archetype=="beans" || a.archetype=="goose")) return false;
             var e=world.Find(a.targetId);
             switch(a.type) {
                 case "spawn":
@@ -32,7 +35,7 @@ namespace JackGame
                         case "size": var size=Mathf.Clamp(a.numberValue,.5f,2.5f); if(Mathf.Approximately(e.size,size)) return true; e.size=size; break;
                         case "stability": var stable=Mathf.Clamp01(a.numberValue); if(Mathf.Approximately(e.stability,stable)) return true; e.stability=stable; break;
                         case "climbable": if(a.value!="true" && a.value!="false") return false; if(e.climbable==(a.value=="true")) return true; e.climbable=a.value=="true"; break;
-                        case "locked": if(e.archetype!="door" || (a.value!="true" && a.value!="false")) return false; e.locked=a.value=="true"; e.displayName=e.id=="exit" ? "Escape gate" : "Castle door"; break;
+                        case "locked": if((e.archetype!="door" && e.archetype!="goose") || (a.value!="true" && a.value!="false")) return false; e.locked=a.value=="true"; e.displayName=e.id=="exit" ? "Route home" : e.id=="goose" ? "Golden goose" : "Castle door"; break;
                         case "visible": if(e.essential || (a.value!="true" && a.value!="false")) return false; e.visible=a.value=="true"; break;
                         case "label": var label=Label(a.value); if(e.displayName==label) return true; e.displayName=label; break;
                         default: return false;
@@ -55,16 +58,19 @@ namespace JackGame
                     e.Connect(other,world.art.worldMaterial); e.stability=1; e.Refresh(); return true;
                 case "destroy": return world.Remove(e);
                 case "grant_item":
-                    if(a.value=="beans" && levels.Current.id!="merchant") return false;
-                    if(a.value=="goose" && levels.Current.id!="escape") return false;
+                    if(a.value=="beans") return false; // The prologue alone receives and plants beans.
+                    if(a.value=="goose") {
+                        var goose=world.Find("goose"); var giant=world.Find("giant");
+                        if(levels.Current.id!="treasure" || !levels.story.Has("castle_entered") || !goose || goose.locked || !goose.visible || !giant || giant.state!="sleeping") return false;
+                        if(!levels.story.TakeGoose()) return false;
+                    }
                     if(a.value!="beans" && a.value!="goose" && a.value!="rope" && a.value!="key") return false;
                     if(!inventory.Grant(a.value)) return true;
-                    if(a.value=="beans") { inventory.Remove("cow"); Hide("cow"); Hide("beans"); }
                     if(a.value=="goose") Hide("goose");
                     return true;
                 case "challenge": return challenges.Begin(a.value);
                 case "resolve_challenge": return challenges.Solved; // Answers are checked locally before any model call.
-                case "advance": return levels.GoalMet; // The player confirms via Next; never mutate the level mid-response.
+                case "advance": return levels.GoalMet; // GameManager transitions after applying the full response.
                 default: return false;
             }
         }

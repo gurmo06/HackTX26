@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
@@ -11,6 +12,7 @@ namespace JackGame
         public Transform actorRoot;
         public GameManager game;
         public readonly List<WorldEntity> entities = new List<WorldEntity>();
+        readonly List<WorldEntity> retiring=new List<WorldEntity>();
         public const int MaxEntities = 24;
         static Sprite cardboard;
         public static readonly string[] SpawnArchetypes = { "ladder", "crate", "rope", "beanstalk", "beans", "goose", "generic", "platform", "stone" };
@@ -18,13 +20,21 @@ namespace JackGame
         public WorldSnapshot[] Snapshot() => entities.Where(e => e).Select(e => e.Snapshot()).ToArray();
         public void Clear()
         {
+            StopAllCoroutines(); // Cancel pending removal effects before destroying a chapter.
             foreach (var e in entities) if (e) { e.gameObject.SetActive(false); Destroy(e.gameObject); }
             entities.Clear();
+            foreach(var e in retiring) if(e) { e.gameObject.SetActive(false); Destroy(e.gameObject); }
+            retiring.Clear();
         }
         public bool Remove(WorldEntity e)
         {
             if (!e || e.essential) return false;
-            entities.Remove(e); e.gameObject.SetActive(false); Destroy(e.gameObject); return true;
+            entities.Remove(e); retiring.Add(e); StartCoroutine(Retire(e)); return true;
+        }
+        IEnumerator Retire(WorldEntity entity)
+        {
+            yield return entity.Disappear(); retiring.Remove(entity);
+            if(entity) { entity.gameObject.SetActive(false); Destroy(entity.gameObject); }
         }
         public string SpriteKey(string archetype)
         {
@@ -56,7 +66,7 @@ namespace JackGame
             e.label.rectTransform.sizeDelta=new Vector2(4,0.7f); e.label.GetComponent<MeshRenderer>().sortingOrder=25;
             e.hitbox=go.AddComponent<BoxCollider2D>();
             var interaction=go.AddComponent<SimpleActorInteraction>(); interaction.entity=e; interaction.game=game;
-            entities.Add(e); e.Refresh(); return e;
+            entities.Add(e); e.Refresh(); e.Appear(); return e;
         }
     }
 }

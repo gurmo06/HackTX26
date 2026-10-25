@@ -19,6 +19,7 @@ namespace JackGame
         public int turnNumber, consecutiveSetbacks;
         public bool challengeSolved;
         public string[] inventory = Array.Empty<string>();
+        public string[] storyMilestones = Array.Empty<string>();
         public WorldSnapshot[] worldEntities = Array.Empty<WorldSnapshot>();
         public HistoryEntry[] recentHistory = Array.Empty<HistoryEntry>();
     }

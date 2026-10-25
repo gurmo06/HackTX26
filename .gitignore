@@ -37,3 +37,6 @@ node_modules/
 web-build/*
 !web-build/.gitkeep
 npm-debug.log*
+
+# Automatic backups of manually edited JackGame scenes
+Documentation/SceneBackups/

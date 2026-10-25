@@ -1,15 +1,17 @@
 import { z } from 'zod';
 
-export const levels = ['merchant', 'grow', 'climb', 'castle', 'escape'];
+export const levels = ['sabotaged', 'climb', 'castle', 'treasure', 'escape'];
 export const archetypes = ['ladder', 'crate', 'rope', 'beanstalk', 'beans', 'goose', 'generic', 'platform', 'stone'];
 export const challenges = ['echo', 'towel', 'piano'];
 export const roster = {
-  merchant: { stall: 'stall', merchant: 'npc', cow: 'cow', beans: 'beans' },
-  grow: { beanstalk: 'beanstalk', cloud: 'platform' },
+  sabotaged: { beanstalk: 'beanstalk', cottage: 'castle', stone: 'stone' },
   climb: { beanstalk: 'beanstalk', cloud: 'platform' },
-  castle: { giant: 'giant', door: 'door', castle: 'castle' },
-  escape: { giant: 'giant', goose: 'goose', egg: 'egg', exit: 'door' },
+  castle: { door: 'door', castle: 'castle', crate: 'crate' },
+  treasure: { giant: 'giant', goose: 'goose', treasure: 'egg', crate: 'crate' },
+  escape: { giant: 'giant', exit: 'door', stone: 'stone' },
 };
+export const milestoneOrder = ['received_beans', 'planted_beans', 'beanstalk_grown', 'route_secured', 'gap_crossed', 'castle_entered', 'goose_taken', 'giant_awake', 'escaped', 'home'];
+const entryCount = { sabotaged: 3, climb: 4, castle: 5, treasure: 6, escape: 8 };
 const id = z.string().regex(/^[a-z][a-z0-9_]{0,31}$/);
 const text = n => z.string().max(n).refine(s => !/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(s), 'Control characters are not allowed');
 export const worldSchema = z.object({
@@ -23,11 +25,19 @@ export const requestSchema = z.object({
   levelId: z.enum(levels), playerText: text(400).refine(s => s.trim().length > 0),
   activeChallengeId: z.enum(['', ...challenges]), challengeSolved: z.boolean(),
   turnNumber: z.number().int().min(1).max(200), consecutiveSetbacks: z.number().int().min(0).max(200),
+  storyMilestones: z.array(z.enum(milestoneOrder)).max(10),
   inventory: z.array(z.enum(['cow', 'beans', 'goose', 'rope', 'key'])).max(5),
   worldEntities: z.array(worldSchema).min(1).max(24),
   recentHistory: z.array(z.object({ role: z.enum(['player', 'narrator']), text: text(350) }).strict()).max(6),
 }).strict().superRefine((r, ctx) => {
   const entities = new Map(r.worldEntities.map(e => [e.id, e]));
+  const count = r.storyMilestones.length;
+  if (r.storyMilestones.some((name, index) => name !== milestoneOrder[index]) || count < entryCount[r.levelId] || count > entryCount[r.levelId] + (r.levelId === 'treasure' ? 1 : 0))
+    ctx.addIssue({ code: 'custom', message: 'Story milestones are inconsistent with this chapter' });
+  if (r.inventory.includes('beans') || r.inventory.includes('cow') || r.inventory.includes('goose') !== r.storyMilestones.includes('goose_taken'))
+    ctx.addIssue({ code: 'custom', message: 'Story inventory is inconsistent with milestones' });
+  if (r.levelId === 'treasure' && entities.get('giant')?.state !== 'sleeping') ctx.addIssue({ code: 'custom', message: 'The giant sleeps until the awakening cutscene' });
+  if (r.levelId === 'escape' && entities.get('giant')?.state !== 'pursuing') ctx.addIssue({ code: 'custom', message: 'The giant is awake during the escape' });
   if (entities.size !== r.worldEntities.length || new Set(r.inventory).size !== r.inventory.length)
     ctx.addIssue({ code: 'custom', message: 'Duplicate entity or inventory item' });
   for (const [name, kind] of Object.entries(roster[r.levelId])) {
@@ -54,15 +64,16 @@ export const fallback = (explanation = 'api_unavailable', narration = 'The narra
   narration, mood: 'neutral', twist: 'none', actions: [], challengeId: '', explanation,
 });
 
-export function goalMet(level, entities, inventory) {
+export function goalMet(level, entities, inventory, storyMilestones = []) {
+  if (!storyMilestones.includes(milestoneOrder[entryCount[level] - 1])) return false;
   const find = name => entities.get(name);
   const bridge = [...entities.values()].some(e => e.visible && e.climbable && e.stability >= .7 && e.size >= 1.5 && ['ladder', 'rope', 'platform', 'generic'].includes(e.archetype));
   switch (level) {
-    case 'merchant': return inventory.has('beans');
-    case 'grow': { const p = find('beanstalk'); return !!(p?.visible && p.climbable && p.size >= 1.5 && p.stability >= .7); }
+    case 'sabotaged': { const p = find('beanstalk'); return !!(p?.visible && p.climbable && p.size >= 1.5 && p.stability >= .7) || bridge; }
     case 'climb': return bridge;
     case 'castle': return !!(find('door')?.visible && !find('door').locked) || bridge;
-    case 'escape': return inventory.has('goose') && !!find('exit')?.visible && !find('exit').locked;
+    case 'treasure': return inventory.has('goose') && storyMilestones.includes('goose_taken');
+    case 'escape': return inventory.has('goose') && ((!!find('exit')?.visible && !find('exit').locked) || bridge);
     default: return false;
   }
 }
@@ -75,9 +86,11 @@ export function validateResponse(raw, request) {
   const response = parsed.data;
   const entities = new Map(request.worldEntities.map(e => [e.id, { ...e }]));
   const inventory = new Set(request.inventory);
+  const story = [...request.storyMilestones];
   let activeChallenge = request.activeChallengeId;
   const essential = name => Object.hasOwn(roster[request.levelId], name);
   function apply(a) {
+    if (['spawn', 'transform'].includes(a.type) && ['beans', 'goose'].includes(a.archetype)) return false;
     let e = entities.get(a.targetId);
     switch (a.type) {
       case 'spawn':
@@ -90,7 +103,7 @@ export function validateResponse(raw, request) {
           e[a.property] = a.numberValue; return true;
         }
         if (['climbable', 'locked', 'visible'].includes(a.property)) {
-          if (!['true', 'false'].includes(a.value) || (a.property === 'locked' && e.archetype !== 'door') || (a.property === 'visible' && essential(e.id))) return false;
+          if (!['true', 'false'].includes(a.value) || (a.property === 'locked' && !['door', 'goose'].includes(e.archetype)) || (a.property === 'visible' && essential(e.id))) return false;
           e[a.property] = a.value === 'true'; return true;
         }
         return a.property === 'label';
@@ -107,16 +120,19 @@ export function validateResponse(raw, request) {
         if (!e || essential(e.id)) return false;
         entities.delete(e.id); return true;
       case 'grant_item':
-        if (!['beans', 'goose', 'rope', 'key'].includes(a.value) || (a.value === 'beans' && request.levelId !== 'merchant') || (a.value === 'goose' && request.levelId !== 'escape')) return false;
-        inventory.add(a.value);
-        if (a.value === 'beans') { inventory.delete('cow'); for (const name of ['cow', 'beans']) if (entities.has(name)) entities.get(name).visible = false; }
-        if (a.value === 'goose' && entities.has('goose')) entities.get('goose').visible = false;
-        return true;
+        if (!['goose', 'rope', 'key'].includes(a.value)) return false;
+        if (a.value === 'goose') {
+          const goose = entities.get('goose');
+          if (request.levelId !== 'treasure' || !story.includes('castle_entered') || !goose?.visible || goose.locked || entities.get('giant')?.state !== 'sleeping') return false;
+          if (!story.includes('goose_taken')) story.push('goose_taken');
+          goose.visible = false;
+        }
+        inventory.add(a.value); return true;
       case 'challenge':
         if (!challenges.includes(a.value) || activeChallenge || request.challengeSolved) return false;
         activeChallenge = a.value; return true;
       case 'resolve_challenge': return request.challengeSolved;
-      case 'advance': return goalMet(request.levelId, entities, inventory);
+      case 'advance': return goalMet(request.levelId, entities, inventory, story);
       default: return false;
     }
   }

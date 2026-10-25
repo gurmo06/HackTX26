@@ -1,13 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHandler } from '../netlify/functions/narrate.mjs';
-import { requestSchema, responseSchema, validateResponse, fallback, roster } from '../netlify/functions/server/contract.mjs';
+import { requestSchema, responseSchema, validateResponse, fallback, roster, milestoneOrder } from '../netlify/functions/server/contract.mjs';
 
 let sequence = 0;
-export function snapshot(levelId = 'merchant') {
-  return { sessionId: `demo-test-${++sequence}`, levelId, playerText: 'Please trade my cow for magic beans.', activeChallengeId: '', challengeSolved: false,
-    turnNumber: 1, consecutiveSetbacks: 0, inventory: ['cow'], recentHistory: [],
-    worldEntities: Object.entries(roster[levelId]).map(([id, archetype]) => ({ id, archetype, state: 'ready', x: 0, y: 0, size: 1, stability: 1, climbable: false, locked: archetype === 'door', visible: true })) };
+export function snapshot(levelId = 'sabotaged') {
+  const count = { sabotaged: 3, climb: 4, castle: 5, treasure: 6, escape: 8 }[levelId];
+  return { sessionId: `demo-test-${++sequence}`, levelId, playerText: 'Please create a stable climbing route.', activeChallengeId: '', challengeSolved: false,
+    turnNumber: 1, consecutiveSetbacks: 0, inventory: levelId === 'escape' ? ['goose'] : [], recentHistory: [], storyMilestones: milestoneOrder.slice(0, count),
+    worldEntities: Object.entries(roster[levelId]).map(([id, archetype]) => ({ id, archetype, state: id === 'giant' ? (levelId === 'treasure' ? 'sleeping' : 'pursuing') : 'ready', x: 0, y: 0, size: id === 'beanstalk' ? 1.5 : 1, stability: id === 'beanstalk' ? .25 : 1, climbable: false, locked: ['door', 'goose'].includes(archetype), visible: true })) };
 }
 const action = (type, fields = {}) => ({ type, targetId: '', archetype: '', property: '', value: '', numberValue: 0, placement: '', ...fields });
 const response = (...actions) => ({ narration: 'A visible change, Jack.', mood: 'smug', twist: 'helpful', actions, challengeId: '', explanation: 'A useful turn' });
@@ -48,9 +49,9 @@ test('model call uses structured output, bounded SDK retry, isolated untrusted u
     assert.equal(options.config.responseMimeType, 'application/json'); assert(options.config.responseJsonSchema.properties.actions);
     assert.equal(options.config.httpOptions.retryOptions.attempts, 1); assert(options.config.abortSignal);
     assert(!options.config.systemInstruction.includes(r.playerText)); assert(options.contents[0].parts[0].text.includes(r.playerText));
-    return { text: JSON.stringify(response(action('grant_item', { value: 'beans' }))) };
+    return { text: JSON.stringify(response(action('spawn', { targetId: 'shield', archetype: 'generic', placement: 'center', value: 'Cardboard shield' }))) };
   } });
-  const data = await (await handler(req(r), context())).json(); assert.equal(data.actions[0].value, 'beans');
+  const data = await (await handler(req(r), context())).json(); assert.equal(data.actions[0].targetId, 'shield');
 });
 
 test('transient failures retry once; permanent errors and malformed output fall back without claims', async () => {
@@ -76,11 +77,11 @@ test('sequential spawn + topple + stabilize works; unknown target invalidates en
 
 test('all five goal gates validate after supporting actions, never before', () => {
   const turns = {
-    merchant: [action('grant_item', { value: 'beans' })],
-    grow: [action('modify', { targetId: 'beanstalk', property: 'size', numberValue: 2 }), action('modify', { targetId: 'beanstalk', property: 'climbable', value: 'true' })],
+    sabotaged: [action('modify', { targetId: 'beanstalk', property: 'stability', numberValue: 1 }), action('modify', { targetId: 'beanstalk', property: 'climbable', value: 'true' })],
     climb: [action('spawn', { targetId: 'bridge', archetype: 'platform', numberValue: 1.7, placement: 'center', value: 'Bridge' })],
     castle: [action('modify', { targetId: 'door', property: 'locked', value: 'false' })],
-    escape: [action('grant_item', { value: 'goose' }), action('modify', { targetId: 'exit', property: 'locked', value: 'false' })],
+    treasure: [action('modify', { targetId: 'goose', property: 'locked', value: 'false' }), action('grant_item', { value: 'goose' })],
+    escape: [action('modify', { targetId: 'exit', property: 'locked', value: 'false' })],
   };
   for (const [level, actions] of Object.entries(turns)) {
     assert.equal(validateResponse(response(action('advance')), snapshot(level)).actions.length, 0);
@@ -90,7 +91,7 @@ test('all five goal gates validate after supporting actions, never before', () =
 
 test('required actors, cross-level items, bounds, challenges and extra fields are protected', () => {
   const r = snapshot();
-  for (const invalid of [action('destroy', { targetId: 'merchant' }), action('grant_item', { value: 'goose' }), action('modify', { targetId: 'cow', property: 'size', numberValue: 7 }), action('resolve_challenge'), action('connect', { targetId: 'cow', value: 'missing' }), { ...action('advance'), script: 'evil' }])
+  for (const invalid of [action('destroy', { targetId: 'beanstalk' }), action('grant_item', { value: 'goose' }), action('modify', { targetId: 'beanstalk', property: 'size', numberValue: 7 }), action('resolve_challenge'), action('connect', { targetId: 'beanstalk', value: 'missing' }), { ...action('advance'), script: 'evil' }])
     assert.equal(validateResponse(response(invalid), r).actions.length, 0);
   assert.equal(validateResponse(response(action('challenge', { value: 'echo' })), r).actions.length, 1);
   assert.equal(validateResponse(response(action('resolve_challenge')), { ...r, challengeSolved: true }).actions.length, 1);
@@ -116,4 +117,36 @@ test('C# request/response/action DTO fields match the server contract exactly', 
   }
   for (const [name, schema] of [['NarratorRequest', requestSchema], ['NarratorResponse', responseSchema], ['GameAction', actionSchema], ['WorldSnapshot', worldSchema]])
     assert.deepEqual(fields(name), Object.keys(schema.shape).sort(), name);
+});
+
+
+test('story milestones and inventory cannot bypass mandatory chapters', () => {
+  for (const level of ['sabotaged', 'climb', 'castle', 'treasure', 'escape']) {
+    const r = snapshot(level);
+    assert(requestSchema.safeParse(r).success, level);
+    assert.equal(requestSchema.safeParse({ ...r, storyMilestones: [] }).success, false);
+    assert.equal(requestSchema.safeParse({ ...r, storyMilestones: milestoneOrder }).success, false);
+    assert.equal(requestSchema.safeParse({ ...r, inventory: ['beans'] }).success, false);
+    assert.equal(validateResponse(response(action('grant_item', { value: 'beans' })), r).actions.length, 0);
+    assert.equal(validateResponse(response(action('spawn', { targetId: 'duplicate_goose', archetype: 'goose', placement: 'center' })), r).actions.length, 0);
+    assert.equal(validateResponse(response(action('grant_item', { value: 'goose' })), r).actions.length, 0);
+  }
+  const treasure = snapshot('treasure'); treasure.worldEntities.find(e => e.id === 'goose').locked = false;
+  assert.equal(validateResponse(response(action('grant_item', { value: 'goose' }), action('advance')), treasure).actions.length, 2);
+  treasure.worldEntities.find(e => e.id === 'giant').state = 'pursuing';
+  assert.equal(requestSchema.safeParse(treasure).success, false);
+  assert.equal(validateResponse(response(action('grant_item', { value: 'goose' })), treasure).actions.length, 0);
+});
+
+
+test('client and server chapter rosters and milestone order stay aligned', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const definition = await readFile(new URL('../Assets/Scripts/Jack/LevelDefinition.cs', import.meta.url), 'utf8');
+  const state = await readFile(new URL('../Assets/Scripts/Jack/StoryState.cs', import.meta.url), 'utf8');
+  const clientOrder = [...state.match(/Order = \{([^}]+)\}/)[1].matchAll(/"([a-z_]+)"/g)].map(m => m[1]);
+  assert.deepEqual(clientOrder, milestoneOrder);
+  const clientRoster = {};
+  for (const match of definition.matchAll(/new LevelDefinition \{ id="([^"]+)"[\s\S]*?actors=new\[\] \{([\s\S]*?) \} \}/g))
+    clientRoster[match[1]] = Object.fromEntries([...match[2].matchAll(/new ActorDefinition\("([^"]+)","([^"]+)"/g)].map(m => [m[1], m[2]]));
+  assert.deepEqual(clientRoster, roster);
 });

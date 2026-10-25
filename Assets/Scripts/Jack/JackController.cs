@@ -11,12 +11,21 @@ namespace JackGame
         public GameManager game;
         public float speed = 3;
         float ascent;
+        SpriteRenderer carriedGoose;
         public void BeginAscent() { ascent=1.2f; }
         public void StopAscent() { ascent=0; SetSprite(idle); }
         void SetSprite(Sprite sprite)
         {
             visual.sprite=sprite ? sprite : idle;
             visual.transform.localScale=Vector3.one*(1.8f/visual.sprite.bounds.size.y);
+        }
+        void LateUpdate()
+        {
+            if(!game || !game.inventory) return;
+            if(game.inventory.Has("goose")) {
+                if(!carriedGoose) { var go=new GameObject("Carried golden goose"); go.transform.SetParent(transform,false); carriedGoose=go.AddComponent<SpriteRenderer>(); carriedGoose.sprite=game.world.art.Get("golden_goose"); carriedGoose.sharedMaterial=visual.sharedMaterial; carriedGoose.sortingOrder=14; go.transform.localScale=Vector3.one*(.65f/carriedGoose.sprite.bounds.size.y); }
+                carriedGoose.gameObject.SetActive(true); carriedGoose.transform.localPosition=new Vector3(visual.flipX ? -.5f : .5f,.15f+Mathf.Sin(Time.time*3)*.025f,0);
+            } else if(carriedGoose) carriedGoose.gameObject.SetActive(false);
         }
         void Update()
         {

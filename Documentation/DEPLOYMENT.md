@@ -28,12 +28,12 @@ Implementation uses `@google/genai` with `models.generateContent`, `config.respo
 
 ## HTTP check
 
-`tests/fixtures/merchant-request.json` is a complete client-contract example. With the local server running:
+`tests/fixtures/sabotaged-request.json` is a complete client-contract example. With the local server running:
 
 ```sh
 curl -i http://localhost:8888/api/narrate \
   -H 'Content-Type: application/json' \
-  --data-binary @tests/fixtures/merchant-request.json
+  --data-binary @tests/fixtures/sabotaged-request.json
 ```
 
 Expect HTTP 200 and the fields `narration`, `mood`, `twist`, `actions`, `challengeId`, `explanation`. With live environment enabled, verify a real action response. An `offline` or `api_unavailable` explanation is a fallback, not evidence that Gemini worked. `GET` returns 405; malformed requests return 400, >16KB return 413, wrong media type returns 415, and throttling returns 429. Production CORS is same-origin. Local CORS additionally permits localhost/127.0.0.1 ports 8888, 8080 and 8000 only in dev mode. Unity Editor sends no browser Origin header.
@@ -42,7 +42,7 @@ For Editor live testing: GameManager > Narrator Client > Use Mock Narrator **off
 
 ## Build the Unity player
 
-Use `Documentation/UNITY_MANUAL_STEPS.md`, steps 12–13. Output must be:
+Use `Documentation/UNITY_MANUAL_STEPS.md`, the Web build section. Output must be:
 
 ```text
 web-build/
@@ -77,3 +77,10 @@ Build output is gitignored. A Git-connected Netlify deploy cannot run Unity to c
 See `IMPLEMENTATION_STATUS.md` for checks actually executed. Automated backend tests inject model responses; they do not spend quota or prove account/model access. Manual live Gemini, Web export, hosting, and browser UI checks require your credentials and Unity build.
 
 `npm audit --omit=dev` found no production dependency advisories during implementation. The current Netlify CLI retains a development-only `toml` parser advisory (two high findings including the parent CLI) after compatible fixes. No breaking forced downgrade was applied. Recheck before updating tooling, and run the CLI only with the repository's trusted configuration. Runtime backend bundles do not include the CLI.
+
+
+## Story update compatibility
+
+Deploy the updated function and rebuilt Web player together. Requests now use level IDs `sabotaged`, `climb`, `castle`, `treasure`, `escape` and a required `storyMilestones` string array. Responses retain the existing action/narration contract. Old player exports do not supply the new request fields and will fall back offline until rebuilt. The cutscenes never call Gemini; only free-form requests during gameplay use the API.
+
+The client owns milestone state and revalidates all actions. Beans are received and planted in the prologue; the server cannot grant them. Goose acquisition requires the treasure chapter, castle-entry milestone, an unlocked goose ward, and a sleeping giant. Requests claiming future or inconsistent milestones are rejected. As before, submitted snapshots are not authenticated multiplayer state; milestone validation prevents gameplay bypass in the actual client, not cheating in an external fabricated HTTP request.

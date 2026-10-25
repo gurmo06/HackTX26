@@ -1,0 +1,54 @@
+{
+  "sessionId": "demo-curl-check",
+  "levelId": "sabotaged",
+  "playerText": "Narrator, give me a ladder to climb this unstable beanstalk.",
+  "turnNumber": 1,
+  "consecutiveSetbacks": 0,
+  "activeChallengeId": "",
+  "challengeSolved": false,
+  "inventory": [],
+  "worldEntities": [
+    {
+      "id": "beanstalk",
+      "archetype": "beanstalk",
+      "state": "ready",
+      "x": 1,
+      "y": 0.8,
+      "size": 1.5,
+      "stability": 0.25,
+      "climbable": false,
+      "locked": false,
+      "visible": true
+    },
+    {
+      "id": "cottage",
+      "archetype": "castle",
+      "state": "ready",
+      "x": -4,
+      "y": 0.9,
+      "size": 1,
+      "stability": 1,
+      "climbable": false,
+      "locked": false,
+      "visible": true
+    },
+    {
+      "id": "stone",
+      "archetype": "stone",
+      "state": "ready",
+      "x": 3,
+      "y": 0.3,
+      "size": 1,
+      "stability": 1,
+      "climbable": false,
+      "locked": false,
+      "visible": true
+    }
+  ],
+  "recentHistory": [],
+  "storyMilestones": [
+    "received_beans",
+    "planted_beans",
+    "beanstalk_grown"
+  ]
+}
