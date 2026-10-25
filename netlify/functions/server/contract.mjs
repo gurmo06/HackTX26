@@ -80,10 +80,28 @@ export function goalMet(level, entities, inventory, storyMilestones = []) {
 
 // Simulate every proposed action on a copy before displaying the narration.
 // Unity independently revalidates against its actual authoritative scene state.
+// Only unmistakable, standalone traversal attempts are deterministic; creative plans stay free-form.
+export const bareTraversalPattern = /^(?:narrator[,\s]+)?(?:please\s+)?(?:(?:let|allow|help)\s+me\s+|(?:can|may|could)\s+i\s+|i\s+(?:(?:want|try|attempt)\s+to\s+|will\s+)?|(?:try|attempt)\s+to\s+)?(?:climb|ascend|cross|use)(?:\s+(?:up|on|onto|across))?(?:\s+(?:(?:the|that|this|your|wobbly|slippery|unstable)\s+)*(?:it|ladder|rope|platform|bridge|beanstalk))?(?:\s+(?:now|anyway|please))?[.!?]*$/;
+export function unsafeTraversal(request) {
+  if (request.activeChallengeId || !['sabotaged', 'climb'].includes(request.levelId)) return null;
+  const text = request.playerText.trim().toLowerCase();
+  if (!bareTraversalPattern.test(text)) return null;
+  const named = ['ladder', 'rope', 'platform', 'beanstalk'].find(word => new RegExp(`\\b${word}\\b`).test(text));
+  const target = [...request.worldEntities].reverse().find(e => e.visible && (named ? e.archetype === named : e.climbable || e.archetype === 'beanstalk'));
+  if (!target || target.stability >= .7) return null;
+  return { narration: 'Jack tries to climb and slips back down. The route is still unsafe. Asking to climb it did not include a repair, Jack.',
+    mood: 'smug', twist: 'ironic_side_effect', challengeId: '', explanation: 'unsafe_traversal',
+    actions: [{ type: 'modify', targetId: target.id, archetype: '', property: 'stability', value: '', numberValue: Math.min(target.stability, .15), placement: '' }] };
+}
+
 export function validateResponse(raw, request) {
+  const failedAttempt = unsafeTraversal(request);
+  if (failedAttempt) return failedAttempt;
   const parsed = responseSchema.safeParse(raw);
   if (!parsed.success) return fallback('validation_rejected', 'The narrator submitted an illegible stage direction. Try asking again.');
   const response = parsed.data;
+  // Preserve observable twist actions, but never let a twist also finish a chapter.
+  if (response.twist !== 'helpful') response.actions = response.actions.filter(a => a.type !== 'advance');
   const entities = new Map(request.worldEntities.map(e => [e.id, { ...e }]));
   const inventory = new Set(request.inventory);
   const story = [...request.storyMilestones];
@@ -95,7 +113,7 @@ export function validateResponse(raw, request) {
     switch (a.type) {
       case 'spawn':
         if (!a.targetId || e || entities.size >= 24 || !archetypes.includes(a.archetype) || !['near_player', 'center', 'right'].includes(a.placement) || (a.numberValue !== 0 && (a.numberValue < .5 || a.numberValue > 2.5))) return false;
-        entities.set(a.targetId, { id: a.targetId, archetype: a.archetype, size: a.numberValue || 1, stability: 1, climbable: ['ladder', 'rope', 'platform'].includes(a.archetype), visible: true, locked: false }); return true;
+        entities.set(a.targetId, { id: a.targetId, archetype: a.archetype, size: a.numberValue || 1, stability: ['ladder', 'rope', 'platform'].includes(a.archetype) ? .25 : 1, climbable: ['ladder', 'rope', 'platform'].includes(a.archetype), visible: true, locked: false }); return true;
       case 'modify':
         if (!e) return false;
         if (['size', 'stability'].includes(a.property)) {
@@ -109,7 +127,7 @@ export function validateResponse(raw, request) {
         return a.property === 'label';
       case 'transform':
         if (!e || essential(e.id) || !archetypes.includes(a.archetype)) return false;
-        entities.set(e.id, { ...e, archetype: a.archetype, size: 1, stability: 1, visible: true, locked: false, climbable: ['ladder', 'rope', 'platform'].includes(a.archetype) }); return true;
+        entities.set(e.id, { ...e, archetype: a.archetype, size: 1, stability: ['ladder', 'rope', 'platform'].includes(a.archetype) ? .25 : 1, visible: true, locked: false, climbable: ['ladder', 'rope', 'platform'].includes(a.archetype) }); return true;
       case 'move':
         if (!e || !['x', 'y'].includes(a.property) || a.numberValue < (a.property === 'x' ? -6 : -1) || a.numberValue > (a.property === 'x' ? 6 : 2.5)) return false;
         e[a.property] = a.numberValue; return true;
@@ -132,7 +150,7 @@ export function validateResponse(raw, request) {
         if (!challenges.includes(a.value) || activeChallenge || request.challengeSolved) return false;
         activeChallenge = a.value; return true;
       case 'resolve_challenge': return request.challengeSolved;
-      case 'advance': return goalMet(request.levelId, entities, inventory, story);
+      case 'advance': return !activeChallenge && !response.challengeId && a === response.actions.at(-1) && goalMet(request.levelId, entities, inventory, story);
       default: return false;
     }
   }

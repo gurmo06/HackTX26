@@ -4225,6 +4225,7 @@ MonoBehaviour:
   story: {fileID: 1664135424}
   cutscenes: {fileID: 1664135423}
   objectiveCelebrationSeconds: 1.8
+  solutionReadingBufferSeconds: 4
 --- !u!114 &1664135415
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4252,6 +4253,7 @@ MonoBehaviour:
   art: {fileID: 11400000, guid: 4dd7b54d37b074bafbf7a5ba714b2d4e, type: 2}
   actorRoot: {fileID: 225473828}
   game: {fileID: 1664135414}
+  spriteGap: 0.16
 --- !u!114 &1664135417
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4327,7 +4329,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Jack.Runtime::JackGame.NarratorClient
   UseMockNarrator: 0
   ApiUrl: http://localhost:8888/api/narrate
-  TimeoutSeconds: 15
+  TimeoutSeconds: 55
 --- !u!114 &1664135421
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4346,6 +4348,12 @@ MonoBehaviour:
   background: {fileID: 1006604626}
   jack: {fileID: 1750130649}
   sceneCamera: {fileID: 682691607}
+  villageBeanstalkAnchor: {x: 0.645, y: 0.445}
+  villageBeanstalkHeight: 0.58
+  villageBeanstalkWobbleDegrees: 4
+  villageBeanstalkWobbleDistance: 0.08
+  villageBeanstalkWobbleSpeed: 2.4
+  anchorStoneGap: 0.35
 --- !u!4 &1664135422
 Transform:
   m_ObjectHideFlags: 0

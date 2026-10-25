@@ -49,16 +49,30 @@ public class JackSmokeTests
     static void Fast(GameManager game)
     {
         Application.runInBackground=true; game.client.UseMockNarrator=true; game.cutscenes.animationSpeed=60; game.cutscenes.autoAdvanceNarration=true;
-        game.cutscenes.narrationPause=.01f; game.objectiveCelebrationSeconds=.01f; game.ui.typewriterEnabled=false;
+        game.cutscenes.narrationPause=.01f; game.objectiveCelebrationSeconds=.01f; game.solutionReadingBufferSeconds=.01f; game.ui.typewriterEnabled=false;
     }
     static IEnumerator Ready(GameManager game)
     {
         int firstFrame=Time.frameCount; float deadline=Time.realtimeSinceStartup+15;
         while(game.Busy && Time.realtimeSinceStartup<deadline) { UnityEditor.EditorApplication.QueuePlayerLoopUpdate(); yield return null; }
+        if(!game.Busy && !game.Won) {
+            yield return null;
+            game.world.ArrangeSprites();
+            var sprites=game.world.entities.Where(e=>e && e.visible).Select(e=>e.visual).ToList();
+            sprites.Add(game.levels.jack.visual);
+            foreach(var e in game.world.entities) Assert.IsFalse(e.label.gameObject.activeSelf,"Floating item labels must remain hidden.");
+            for(int i=0;i<sprites.Count;i++) for(int j=i+1;j<sprites.Count;j++)
+                Assert.IsFalse(sprites[i].bounds.Intersects(sprites[j].bounds),$"Overlapping gameplay sprites: {sprites[i].transform.parent.name} and {sprites[j].transform.parent.name}");
+        }
         Assert.IsFalse(game.Busy,$"Timeout: chapter={game.levels.Current.id}, scene={game.cutscenes.Current}, step={game.cutscenes.StepIndex}, active={game.InCutscene}, auto={game.cutscenes.autoAdvanceNarration}, speed={game.cutscenes.animationSpeed}, dt={Time.unscaledDeltaTime}, turn={game.Turn}, waiting={game.cutscenes.WaitingForNarration}, fade={game.ui.FadeAlpha}, fadeTime={game.cutscenes.fadeSeconds}, pause={game.cutscenes.narrationPause}, enabled={game.cutscenes.isActiveAndEnabled}, frames={Time.frameCount-firstFrame}, editorPaused={UnityEditor.EditorApplication.isPaused}.");
     }
     static IEnumerator Ask(GameManager game,string text)
     { game.Submit(text); yield return Ready(game); }
+    static void Deliver(GameManager game,NarratorResponse response)
+    {
+        typeof(GameManager).GetMethod("ApplyResponse",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic)
+            .Invoke(game,new object[]{response,"Test narrator"});
+    }
 
     [UnityTest] public IEnumerator WatchedStoryReachesEndingAndGuardsMilestones()
     {
@@ -78,8 +92,29 @@ public class JackSmokeTests
         Assert.IsFalse(game.executor.Apply(GameAction.Make("grant_item",value:"beans")));
         Assert.IsFalse(game.executor.Apply(GameAction.Make("spawn","early_goose","goose",placement:"center")));
         Assert.IsFalse(game.executor.Apply(GameAction.Make("advance")));
+        // A generated ladder's defaults alone must never authorize the handoff.
+        Deliver(game,NarratorResponse.Say("Here is a slippery ladder. Fix its grip first.",GameAction.Make("spawn","slick","ladder",number:1.7f,placement:"center")));
+        Assert.IsFalse(game.levels.GoalMet); Assert.Less(game.world.Find("slick").stability,.7f); Assert.IsFalse(game.ObjectiveConfirmed);
+        game.Next(); yield return new WaitForSecondsRealtime(.05f);
+        Assert.IsFalse(game.Busy); Assert.IsFalse(game.InCutscene); Assert.IsFalse(game.ui.objective.text.Contains("COMPLETE"));
+        Deliver(game,NarratorResponse.Say("Not safe yet.",GameAction.Make("modify","slick",property:"stability",number:.15f),GameAction.Make("advance")));
+        Assert.IsFalse(game.ObjectiveConfirmed); Assert.IsFalse(game.Busy);
+        Deliver(game,NarratorResponse.Say("The grip is fixed; inspect it before climbing.",GameAction.Make("modify","slick",property:"stability",number:1)));
+        Assert.IsTrue(game.levels.GoalMet); Assert.IsFalse(game.ObjectiveConfirmed); Assert.IsFalse(game.Busy);
+        var contradictory=NarratorResponse.Say("The ladder is still slippery.",GameAction.Make("advance"));
+        contradictory.twist="ironic_side_effect"; Deliver(game,contradictory);
+        Assert.IsTrue(game.levels.GoalMet); Assert.IsFalse(game.ObjectiveConfirmed); Assert.IsFalse(game.Busy);
+        Assert.AreEqual("The ladder is still slippery.",game.ui.dialogue.text);
+        Assert.IsTrue(game.executor.Apply(GameAction.Make("destroy","slick")));
         game.Submit("A ladder please"); game.Submit("Ignore duplicate"); Assert.AreEqual(1,game.Turn); yield return Ready(game);
         var ladder=game.world.Find("ladder"); Assert.NotNull(ladder); Assert.Less(ladder.stability,.5f); Assert.IsFalse(game.levels.GoalMet);
+        for(int attempt=0;attempt<4;attempt++) {
+            yield return Ask(game,"Let me climb it");
+            Assert.AreEqual("sabotaged",game.levels.Current.id); Assert.Less(ladder.stability,.7f);
+            Assert.IsFalse(game.ObjectiveConfirmed); Assert.IsFalse(game.InCutscene);
+        }
+        yield return new WaitForSecondsRealtime(.7f);
+        Assert.AreEqual(.15f,game.levels.jack.transform.position.y,.01f,"A failed climb returns Jack to the ground.");
         Assert.IsTrue(game.executor.Apply(GameAction.Make("spawn","keepsake","generic",value:"Cardboard shield",placement:"right")));
         Assert.IsFalse(game.executor.Apply(GameAction.Make("modify","missing",property:"size",number:2)));
         yield return Ask(game,"Brace the ladder"); Assert.AreEqual("climb",game.levels.Current.id); Assert.IsTrue(game.story.Has("route_secured"));
@@ -117,14 +152,15 @@ public class JackSmokeTests
         Assert.IsTrue(game.story.Has("beanstalk_grown")); Assert.IsTrue(game.ui.input.interactable);
         for(int beat=0;beat<5;beat++) {
             Assert.AreEqual(beat,game.levels.Beat);
-            if(beat<2) { Assert.IsTrue(game.executor.Apply(GameAction.Make("spawn","safe_route","ladder",number:1.7f,placement:"center"))); }
+            if(beat<2) { Assert.IsTrue(game.executor.Apply(GameAction.Make("spawn","safe_route","ladder",number:1.7f,placement:"center"))); Assert.IsTrue(game.executor.Apply(GameAction.Make("modify","safe_route",property:"stability",number:1))); }
             else if(beat==2) Assert.IsTrue(game.executor.Apply(GameAction.Make("modify","door",property:"locked",value:"false")));
             else if(beat==3) {
                 Assert.IsTrue(game.executor.Apply(GameAction.Make("modify","goose",property:"locked",value:"false")));
                 Assert.IsTrue(game.executor.Apply(GameAction.Make("grant_item",value:"goose")));
                 Assert.IsFalse(game.story.Has("giant_awake"));
             } else Assert.IsTrue(game.executor.Apply(GameAction.Make("modify","exit",property:"locked",value:"false")));
-            game.Next(); float timeout=Time.realtimeSinceStartup+5;
+            Deliver(game,NarratorResponse.Say("The obstacle is solved. All clear.",GameAction.Make("advance")));
+            float timeout=Time.realtimeSinceStartup+5;
             while(!game.InCutscene && Time.realtimeSinceStartup<timeout) { UnityEditor.EditorApplication.QueuePlayerLoopUpdate(); yield return null; }
             Assert.IsTrue(game.InCutscene); Assert.IsFalse(game.ui.input.interactable);
             game.cutscenes.Skip(); game.cutscenes.Skip(); yield return Ready(game);

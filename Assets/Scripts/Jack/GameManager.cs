@@ -17,10 +17,13 @@ namespace JackGame
         public StoryState story;
         public CutsceneDirector cutscenes;
         [Min(0)] public float objectiveCelebrationSeconds=1.8f;
+        [Tooltip("Reading time after the successful reply finishes typing, before the scripted cutscene begins. Also applies when Show text is clicked.")]
+        [Min(0)] public float solutionReadingBufferSeconds=4f;
         public bool InCutscene => cutscenes && cutscenes.IsPlaying;
         public bool Busy { get; private set; }
         public bool RequestInFlight { get; private set; }
         public bool Won { get; private set; }
+        public bool ObjectiveConfirmed { get; private set; }
         public int Turn { get; private set; }
         public int Setbacks { get; private set; }
         readonly List<HistoryEntry> history=new List<HistoryEntry>();
@@ -40,7 +43,7 @@ namespace JackGame
         }
         public void Restart()
         {
-            initialized=true; generation++; StopAllCoroutines(); client.Cancel(); cutscenes.Cancel(); RequestInFlight=false; Busy=true; Won=false; Turn=0; Setbacks=0;
+            initialized=true; ObjectiveConfirmed=false; generation++; StopAllCoroutines(); client.Cancel(); cutscenes.Cancel(); RequestInFlight=false; Busy=true; Won=false; Turn=0; Setbacks=0;
             history.Clear(); session="demo-"+Guid.NewGuid().ToString("N"); inventory.ResetItems(); story.ResetStory(); challenges.ResetChallenge(); levels.PreparePrologue();
             ui.input.text=""; ui.input.DeactivateInputField(); ui.lastRequest.text="Next: reveal / continue narration · Skip: continue to gameplay";
             cutscenes.Play(StoryCutscene.Prologue,()=>StartCoroutine(EnterChapter(0)));
@@ -48,7 +51,7 @@ namespace JackGame
         public void Interact(WorldEntity entity)
         {
             if(Busy || Won) return;
-            string prompt=entity.id=="goose" ? "Narrator, help me silence the goose alarm and take it without waking the giant." : "Narrator, help me use the "+entity.displayName+" to complete my goal.";
+            string prompt=entity.id=="goose" ? "Narrator, I approach the golden goose." : "Narrator, help me use the "+entity.displayName+" to complete my goal.";
             ui.input.text=prompt;
             ui.Say("Ask about "+entity.displayName+". Edit the request below, then press Enter or Ask.");
             ui.input.ActivateInputField();
@@ -71,56 +74,48 @@ namespace JackGame
             RequestInFlight=true; Busy=true; ui.Refresh(); int revision=levels.Revision, stamp=generation;
             StartCoroutine(client.Request(request,(response,status)=> {
                 if(stamp!=generation || revision!=levels.Revision) return;
-                RequestInFlight=false; Busy=false; ApplyResponse(response,status);
+                RequestInFlight=false; Busy=false; ApplyResponse(NarratorMock.UnsafeTraversal(request) ?? response,status);
             }));
         }
         void ApplyResponse(NarratorResponse response,string status)
         {
+            ObjectiveConfirmed=false;
             string before=JsonUtility.ToJson(new NarratorRequest { inventory=inventory.Snapshot(),worldEntities=world.Snapshot() });
-            int rejected=0;
-            if(response.actions!=null) foreach(var action in response.actions) if(!executor.Apply(action)) {
-                // Setting an already-satisfied property is harmless, but suppress unverified claims conservatively.
-                rejected++;
+            int rejected=0; bool approved=false;
+            if(response.actions!=null) foreach(var action in response.actions) {
+                // A twist cannot also authorize a successful handoff, even if the model sends advance.
+                if(action!=null && action.type=="advance" && response.twist!="helpful") continue;
+                if(action!=null && action.type=="advance" && action!=response.actions[response.actions.Length-1]) rejected++;
+                else if(!executor.Apply(action)) rejected++;
+                else if(action.type=="advance") approved=true;
             }
             if(!string.IsNullOrEmpty(response.challengeId) && challenges.ActiveId=="") challenges.Begin(response.challengeId);
             string after=JsonUtility.ToJson(new NarratorRequest { inventory=inventory.Snapshot(),worldEntities=world.Snapshot() });
             Setbacks=before!=after ? 0 : Setbacks+1;
             string narration=rejected>0 ? "The stage crew refused part of that request. Only the changes you can see took effect. Try a different approach." : response.narration;
             if(challenges.ActiveId!="") narration+="\n"+ChallengeManager.Question(challenges.ActiveId);
-            if(Setbacks>=3 && challenges.ActiveId=="" && !levels.GoalMet) {
-                if(world.entities.Count>=WorldRegistry.MaxEntities) { var removable=world.entities.Find(e=>e && !e.essential && e.id!="ladder"); if(removable) world.Remove(removable); }
-                var help=NarratorMock.Respond(Snapshot("Please help me progress"),true);
-                int applied=0; foreach(var action in help.actions) if(executor.Apply(action)) applied++;
-                if(applied>0) { narration=help.narration; Setbacks=0; status+=" · mercy rule applied"; }
-            } else if(Setbacks>=2) narration+="\nHint: "+Hint();
+            if(response.explanation=="unsafe_traversal") levels.jack.PlayFailedClimb();
+            ObjectiveConfirmed=approved && rejected==0 && levels.GoalMet && challenges.ActiveId=="";
             ui.Say(narration,response.mood); Remember("narrator",narration); ui.Refresh(status);
-            if(levels.GoalMet) BeginTransition();
-        }
-        string Hint()
-        {
-            switch(levels.Current.id) {
-                case "sabotaged": return "Ask for a ladder, then brace it; or stabilize the beanstalk itself.";
-                case "climb": return "Create a stable, climbable ladder or platform across the gap.";
-                case "castle": return "Ask to unlock the sealed castle door.";
-                case "treasure": return "Silence the goose ward (unlock goose), then ask to take it.";
-                default: return "Open the exit or build a stable crossing home.";
-            }
+            if(ObjectiveConfirmed) BeginTransition();
         }
         public void Next()
         {
             if(InCutscene) { cutscenes.NextNarration(); return; }
-            if(!Busy && !Won && levels.GoalMet) BeginTransition();
+            if(!Busy && !Won && ObjectiveConfirmed) BeginTransition();
         }
         void BeginTransition()
         {
-            if(Busy || Won || !levels.GoalMet) return;
-            Busy=true; ui.input.DeactivateInputField(); ui.Refresh("Objective complete · turning the page...");
+            if(Busy || Won || !ObjectiveConfirmed || !levels.GoalMet) return;
+            Busy=true; ui.input.DeactivateInputField(); ui.Refresh("Objective complete · a moment to read...");
             StartCoroutine(Transition());
         }
         IEnumerator Transition()
         {
-            yield return new WaitForSecondsRealtime(objectiveCelebrationSeconds);
-            ui.RevealDialogue();
+            // Preserve the successful AI reply: the reading pause starts only once
+            // the typewriter finishes (or the player chooses Show text).
+            while(ui.IsTyping) yield return null;
+            yield return new WaitForSecondsRealtime(Mathf.Max(objectiveCelebrationSeconds,solutionReadingBufferSeconds));
             var sequence=new[]{StoryCutscene.BeginClimb,StoryCutscene.CloudKingdom,StoryCutscene.TreasureRoom,StoryCutscene.Awakening,StoryCutscene.Ending}[levels.Beat];
             int nextBeat=levels.Beat+1;
             cutscenes.Play(sequence,()=> {
@@ -130,11 +125,12 @@ namespace JackGame
         }
         IEnumerator EnterChapter(int beat)
         {
+            ObjectiveConfirmed=false;
             levels.Load(beat); challenges.ResetChallenge(); Setbacks=0;
             ui.lastRequest.text="A/D or arrows · approach and press E, or click an actor";
             ui.SetFade(1); ui.Say(levels.Current.introduction);
             yield return StoryMotion.Tween(cutscenes.Seconds(cutscenes.fadeSeconds),t=>ui.SetFade(1-t));
-            Busy=false; ui.Refresh(client.UseMockNarrator ? "Offline narrator" : "Live narrator · offline fallback available");
+            Busy=false; ui.Refresh(client.StatusText);
         }
     }
 }

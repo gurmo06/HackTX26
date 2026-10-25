@@ -1,4 +1,5 @@
 using TMPro;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -11,9 +12,31 @@ namespace JackGame
         public GameManager game;
         public float speed = 3;
         float ascent;
+        Coroutine failedClimb;
+        Vector3 failedClimbStart;
         SpriteRenderer carriedGoose;
+        public float LayoutWidth {
+            get {
+                float width=1.35f;
+                foreach(var frame in new[]{idle,walk1,walk2,climb}) if(frame) width=Mathf.Max(width,1.8f*frame.bounds.size.x/frame.bounds.size.y+.1f);
+                return game.inventory.Has("goose") ? Mathf.Max(2f,width) : width;
+            }
+        }
         public void BeginAscent() { ascent=1.2f; }
-        public void StopAscent() { ascent=0; SetSprite(idle); }
+        public void StopAscent() { ascent=0; if(failedClimb!=null) { StopCoroutine(failedClimb); failedClimb=null; transform.position=failedClimbStart; } SetSprite(idle); }
+        public void PlayFailedClimb()
+        {
+            StopAscent(); failedClimbStart=transform.position;
+            failedClimb=StartCoroutine(FailedClimb());
+        }
+        IEnumerator FailedClimb()
+        {
+            SetSprite(climb);
+            yield return StoryMotion.Move(transform,failedClimbStart+Vector3.up*.65f,.35f);
+            SetSprite(idle);
+            yield return StoryMotion.Move(transform,failedClimbStart,.25f);
+            failedClimb=null;
+        }
         void SetSprite(Sprite sprite)
         {
             visual.sprite=sprite ? sprite : idle;
@@ -29,6 +52,7 @@ namespace JackGame
         }
         void Update()
         {
+            if(failedClimb!=null) return;
             if(ascent>0) { ascent-=Time.deltaTime; transform.position+=Vector3.up*Time.deltaTime*1.5f; SetSprite(climb); return; }
             var keys=Keyboard.current;
             if(!game || game.Busy || game.Won || game.ui.input.isFocused || keys==null) { SetSprite(idle); return; }

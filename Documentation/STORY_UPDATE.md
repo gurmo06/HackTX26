@@ -14,7 +14,7 @@ The playable order is now:
 | `treasure` | Silence the goose ward and take it while the giant sleeps | `03_Giant_Castle.png`, cooler tint, altered camera and actors |
 | `escape` | Bring the goose through the final obstacle | `04_NightEscape.png` |
 
-Completing an objective automatically starts its connecting sequence. Narrator text and `advance` never set story milestones or bypass chapters. The goose cannot be granted, spawned or transformed into existence early. It must be taken from the unlocked treasure-room ward while the giant is sleeping. Only then can the awakening sequence enable pursuit. A visible goose follows Jack in escape gameplay.
+Completing an objective requires both a valid world state and a final `advance` action from the narrator. New ladder/rope/platform props start at stability 0.25 and require explicit stabilization or connection. Only a reply classified as `helpful` may carry an all-clear; both the backend and Unity discard `advance` from problematic twists while preserving the other edits and narration. A newly spawned ladder’s defaults cannot start a cutscene. Unsafe routes and pending riddles reject the all-clear. After confirmation, the full reply finishes typing and its configured reading buffer elapses before the connecting sequence begins. Narrator text and `advance` never set story milestones or bypass chapters. The goose cannot be granted, spawned or transformed into existence early. It must be taken from the unlocked treasure-room ward while the giant is sleeping. Only then can the awakening sequence enable pursuit. A visible goose follows Jack in escape gameplay.
 
 ## Added systems
 
@@ -41,3 +41,17 @@ No existing Unity packages, URP assets, art files, font files or external depend
 ## Verification and limits
 
 Current executed results are in `IMPLEMENTATION_STATUS.md`. No paid Gemini request or deployment is performed by this update. The game remains a story puzzle with bounded walking and compositional object actions; the giant's pursuit is staged narrative pressure, not a timed lethal platformer. Connections remain best-effort visual ropes. Page-turn effects were optional and are not added; transitions use fades and camera motion instead.
+
+## Attempts versus repairs
+
+Simple requests such as “Let me climb it” or “I climb the ladder” are attempts to use the existing route, not permission to fix it. For an unstable route, both client and backend enforce a failed attempt and preserve the hazard; Jack performs a short rise-and-slip animation. This guard recognizes only standalone traversal requests so compound creative plans remain available to Gemini. The prompt also instructs the model to honor the distinction for broader free-form wording.
+
+Repeated failures no longer produce hints or automatic world repairs. The offline narrator requires a repair/safety request before stabilizing an existing ladder. The separate riddle mercy rule remains. Restart the backend and Unity Play mode to load these changes; no scene regeneration is needed.
+
+## Uncluttered gameplay presentation
+
+Floating object labels are hidden, including names, climbability, lock and fallen/unstable captions. Objects retain their names and colliders for clicks, interaction and narrator snapshots. The village anchor stone is positioned to the right of the beanstalk, with adjustable **Level Controller > Anchor Stone Gap**.
+
+**World Registry > Sprite Gap** controls spacing between gameplay cutouts. The layout reserves the full width of falling/swaying sprites and Jack, keeps the village beanstalk aligned with the background, and fits other actors into non-overlapping horizontal slots. Crowded props scale visually to fit; their logical size, stability and goal checks do not change. The background illustration and carried goose intentionally remain layered. Cutscene choreography is separate from gameplay layout.
+
+Automatic Hint lines and repair suggestions in deterministic replies were removed. Gemini is instructed to give reactions and consequences without suggesting solutions, including after repeated setbacks. Restart the backend and Play mode to load both changes.

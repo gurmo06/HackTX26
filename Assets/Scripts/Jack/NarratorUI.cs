@@ -63,8 +63,8 @@ namespace JackGame
             if(cinematic) status.text=game.cutscenes.WaitingForNarration ? "Next to continue · Esc to skip" : "Next reveals text · Esc skips the scene";
             else if(message!=null) status.text=message;
             else if(game.RequestInFlight) status.text="Narrator is thinking...";
-            objective.text=cinematic ? game.cutscenes.Title : game.levels.Current.objective+(game.levels.GoalMet ? " · COMPLETE" : "");
-            objective.color=game.levels.GoalMet && !cinematic ? new Color(.7f,1,.65f) : Color.white;
+            objective.text=cinematic ? game.cutscenes.Title : game.levels.Current.objective+(game.ObjectiveConfirmed ? " · COMPLETE" : "");
+            objective.color=game.ObjectiveConfirmed && !cinematic ? new Color(.7f,1,.65f) : Color.white;
             var items=game.inventory.Snapshot(); inventoryText.text="Satchel: "+(items.Length==0 ? "empty" : string.Join(", ",items));
             beanIcon.color=game.inventory.Has("beans") ? Color.white : new Color(1,1,1,.25f);
             eggIcon.color=game.inventory.Has("goose") ? Color.white : new Color(1,1,1,.25f);

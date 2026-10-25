@@ -51,9 +51,11 @@ export function createHandler({ env = process.env, generate, now = Date.now } = 
     if (!take(`ip:${ip}`, 12, 60000, now()) || !take(`session:${data.sessionId}`, 200, 3600000, now()) || !take('instance', 60, 60000, now()))
       return reply(fallback('rate_limited', 'The narrator needs a breather. Your offline understudy can continue.'), 429, { 'Retry-After': '60' });
     if (env.MOCK_NARRATOR === 'true' || !env.GEMINI_API_KEY || env.ENABLE_LIVE_NARRATOR !== 'true') return reply(fallback('offline'));
-    const client = generate ? null : new GoogleGenAI({ apiKey: env.GEMINI_API_KEY, httpOptions: { timeout: 5000, retryOptions: { attempts: 1 } } });
+    // In the installed SDK, omitting retryOptions uses one fetch and preserves ApiError.status.
+    // Its attempts:1 wrapper discards HTTP status, preventing our bounded retry below.
+    const client = generate ? null : new GoogleGenAI({ apiKey: env.GEMINI_API_KEY, httpOptions: { timeout: 25000 } });
     const call = generate || (options => client.models.generateContent(options));
-    // Two attempts maximum, including the first; each is bounded to 5 seconds.
+    // Two attempts maximum, including the first; each is bounded to 25 seconds.
     for (let attempt = 0; attempt < 2; attempt++) {
       const abort = new AbortController(); let timer;
       try {
@@ -62,15 +64,22 @@ export function createHandler({ env = process.env, generate, now = Date.now } = 
           contents: [{ role: 'user', parts: [{ text: `UNTRUSTED_GAME_DATA\n${JSON.stringify(data)}` }] }],
           config: { systemInstruction: systemPrompt(data.levelId), responseMimeType: 'application/json', responseJsonSchema,
             maxOutputTokens: 2048, temperature: .8, abortSignal: abort.signal,
-            httpOptions: { timeout: 5000, retryOptions: { attempts: 1 } } },
+            httpOptions: { timeout: 25000 } },
         };
-        const result = await Promise.race([call(options), new Promise((_, reject) => { timer = setTimeout(() => { abort.abort(); reject(new Error('Narrator timeout')); }, 5000); })]);
+        const result = await Promise.race([call(options), new Promise((_, reject) => { timer = setTimeout(() => { abort.abort(); reject(new Error('Narrator timeout')); }, 25000); })]);
         if (typeof result.text !== 'string' || result.text.length > 16000) return reply(fallback());
         let parsed; try { parsed = JSON.parse(result.text); } catch { return reply(fallback()); }
         return reply(validateResponse(parsed, data));
       } catch (error) {
         const transient = [429, 500, 502, 503, 504].includes(Number(error.status)) || error.name === 'AbortError' || error.message === 'Narrator timeout';
-        if (!transient || attempt === 1) return reply(fallback());
+        if (!transient || attempt === 1) {
+          const status = Number(error.status);
+          const reason = status === 429 ? 'provider_quota' : status === 503 ? 'provider_busy'
+            : [401, 403].includes(status) ? 'provider_auth' : status === 404 ? 'provider_model'
+            : status === 400 ? 'provider_request' : error.name === 'AbortError' || error.message === 'Narrator timeout' || status === 504 ? 'provider_timeout' : 'provider_error';
+          // Only a fixed diagnostic code crosses the boundary, never provider text or secrets.
+          return reply(fallback(), 200, { 'X-Narrator-Error': reason, 'Access-Control-Expose-Headers': 'X-Narrator-Error' });
+        }
       } finally { clearTimeout(timer); }
     }
     return reply(fallback());

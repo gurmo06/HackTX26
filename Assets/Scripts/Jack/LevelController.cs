@@ -11,6 +11,17 @@ namespace JackGame
         public SpriteRenderer background;
         public JackController jack;
         public Camera sceneCamera;
+        [Header("Village beanstalk overlay")]
+        [Tooltip("Root position on the background image: (0,0) bottom-left, (1,1) top-right.")]
+        public Vector2 villageBeanstalkAnchor=new Vector2(.65f,.43f);
+        [Range(.1f,1f), Tooltip("Overlay height as a fraction of the background height at its initial gameplay size.")]
+        public float villageBeanstalkHeight=.55f;
+        [Range(0,15)] public float villageBeanstalkWobbleDegrees=4;
+        [Range(0,.5f)] public float villageBeanstalkWobbleDistance=.08f;
+        [Range(.1f,8)] public float villageBeanstalkWobbleSpeed=2.4f;
+        [Min(0), Tooltip("Clearance between the village beanstalk and the anchor stone on its right.")]
+        public float anchorStoneGap=.35f;
+        bool refreshBeanstalkPlacement;
         public int Beat { get; private set; }
         public int Revision { get; private set; }
         public LevelDefinition Current => LevelDefinition.Beats[Beat];
@@ -43,11 +54,39 @@ namespace JackGame
                 if(actor.id=="goose") e.state="warded";
                 e.Refresh();
             }
+            PlaceVillageBeanstalk();
             jack.transform.position=new Vector3(-2,.15f,0);
             jack.StopAscent(); FrameCamera();
         }
         public void PreparePrologue() { Beat=0; Revision++; world.Clear(); background.enabled=false; jack.StopAscent(); }
-        void LateUpdate() { if(!CinematicCamera) FrameCamera(); }
+        void OnValidate() { refreshBeanstalkPlacement=true; }
+        void LateUpdate()
+        {
+            if(refreshBeanstalkPlacement && Application.isPlaying && !CinematicCamera) {
+                refreshBeanstalkPlacement=false; PlaceVillageBeanstalk();
+            }
+            if(!CinematicCamera) FrameCamera();
+        }
+        void PlaceVillageBeanstalk()
+        {
+            if(Current.id!="sabotaged" || !background || !background.sprite || !world) return;
+            var plant=world.Find("beanstalk"); if(!plant) return;
+            var bounds=background.sprite.bounds;
+            var root=background.transform.TransformPoint(new Vector3(
+                bounds.min.x+bounds.size.x*villageBeanstalkAnchor.x,
+                bounds.min.y+bounds.size.y*villageBeanstalkAnchor.y,0));
+            plant.transform.position=root+Vector3.up*(plant.baseHeight/2);
+            plant.uprightBeanstalk=true;
+            plant.presentationHeight=background.bounds.size.y*villageBeanstalkHeight;
+            plant.unstableSwayDegrees=villageBeanstalkWobbleDegrees;
+            plant.swayDistance=villageBeanstalkWobbleDistance;
+            plant.swaySpeed=villageBeanstalkWobbleSpeed;
+            plant.Refresh();
+            var stone=world.Find("stone");
+            if(stone) stone.transform.position=new Vector3(
+                root.x+plant.LayoutWidth/2+anchorStoneGap+stone.LayoutWidth/2,
+                root.y+stone.baseHeight/2,0);
+        }
         void FrameCamera()
         {
             if (!background.sprite) return;

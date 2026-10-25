@@ -35,6 +35,6 @@ namespace JackGame
         public string narration = "", mood = "neutral", twist = "none", challengeId = "", explanation = "";
         public GameAction[] actions = Array.Empty<GameAction>();
         public static NarratorResponse Say(string text, params GameAction[] actions)
-        { return new NarratorResponse { narration = text, actions = actions }; }
+        { return new NarratorResponse { narration = text, actions = actions, twist = Array.Exists(actions,a=>a!=null && a.type=="advance") ? "helpful" : "none" }; }
     }
 }

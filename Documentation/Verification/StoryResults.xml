@@ -1,43 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<test-run id="2" testcasecount="3" result="Passed" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-25 14:48:00Z" end-time="2026-10-25 14:48:04Z" duration="3.9553404">
-  <test-suite type="TestSuite" id="1000" name="HackTX26" fullname="HackTX26" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-25 14:48:00Z" end-time="2026-10-25 14:48:04Z" duration="3.955340" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+<test-run id="2" testcasecount="3" result="Passed" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-25 16:09:16Z" end-time="2026-10-25 16:09:21Z" duration="5.7794466">
+  <test-suite type="TestSuite" id="1000" name="HackTX26" fullname="HackTX26" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-25 16:09:16Z" end-time="2026-10-25 16:09:21Z" duration="5.779447" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
     <properties>
       <property name="platform" value="EditMode" />
     </properties>
-    <test-suite type="Assembly" id="1005" name="Jack.Tests.dll" fullname="/private/var/folders/rb/8qjsyhws5k1gr7l3g_n79lc00000gn/T/jack-story-check-0lscocx7/Library/ScriptAssemblies/Jack.Tests.dll" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-25 14:48:00Z" end-time="2026-10-25 14:48:04Z" duration="3.839956" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <test-suite type="Assembly" id="1005" name="Jack.Tests.dll" fullname="/private/var/folders/rb/8qjsyhws5k1gr7l3g_n79lc00000gn/T/jack-story-check-0lscocx7/Library/ScriptAssemblies/Jack.Tests.dll" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-25 16:09:16Z" end-time="2026-10-25 16:09:21Z" duration="5.638239" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
       <properties>
-        <property name="_PID" value="77931" />
+        <property name="_PID" value="97304" />
         <property name="_APPDOMAIN" value="Unity Child Domain" />
         <property name="platform" value="EditMode" />
         <property name="EditorOnly" value="True" />
       </properties>
-      <test-suite type="TestFixture" id="1001" name="JackSmokeTests" fullname="JackSmokeTests" classname="JackSmokeTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-25 14:48:00Z" end-time="2026-10-25 14:48:04Z" duration="3.838841" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestFixture" id="1001" name="JackSmokeTests" fullname="JackSmokeTests" classname="JackSmokeTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-25 16:09:16Z" end-time="2026-10-25 16:09:21Z" duration="5.636356" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-case id="1004" name="EverySkipAppliesRequiredStateAndRestoresControls" fullname="JackSmokeTests.EverySkipAppliesRequiredStateAndRestoresControls" methodname="EverySkipAppliesRequiredStateAndRestoresControls" classname="JackSmokeTests" runstate="Runnable" seed="1649952227" result="Passed" start-time="2026-10-25 14:47:50Z" end-time="2026-10-25 14:47:55Z" duration="4.428381" asserts="0">
+        <test-case id="1004" name="EverySkipAppliesRequiredStateAndRestoresControls" fullname="JackSmokeTests.EverySkipAppliesRequiredStateAndRestoresControls" methodname="EverySkipAppliesRequiredStateAndRestoresControls" classname="JackSmokeTests" runstate="Runnable" seed="2071684575" result="Passed" start-time="2026-10-25 16:09:01Z" end-time="2026-10-25 16:09:09Z" duration="7.666588" asserts="0">
           <properties>
             <property name="_JOINTYPE" value="UnityCombinatorial" />
           </properties>
-          <output><![CDATA[Before scene changes, saved backup: Documentation/SceneBackups/JackGame-20261025-144750-9630980.unity
-Before scene changes, saved backup: Documentation/SceneBackups/JackGame-20261025-144750-9630980.unity
+          <output><![CDATA[Before scene changes, saved backup: Documentation/SceneBackups/JackGame-20261025-160901-9332760.unity
+Before scene changes, saved backup: Documentation/SceneBackups/JackGame-20261025-160901-9332760.unity
 Story upgrade complete. Existing gameplay/UI objects and API settings were preserved. A scene backup is in Documentation/SceneBackups.
 Story upgrade complete. Existing gameplay/UI objects and API settings were preserved. A scene backup is in Documentation/SceneBackups.
 ]]></output>
         </test-case>
-        <test-case id="1002" name="StoryUpgradePreservesSceneAndIsIdempotent" fullname="JackSmokeTests.StoryUpgradePreservesSceneAndIsIdempotent" methodname="StoryUpgradePreservesSceneAndIsIdempotent" classname="JackSmokeTests" runstate="Runnable" seed="1352318026" result="Passed" start-time="2026-10-25 14:47:55Z" end-time="2026-10-25 14:47:56Z" duration="0.617944" asserts="0">
+        <test-case id="1002" name="StoryUpgradePreservesSceneAndIsIdempotent" fullname="JackSmokeTests.StoryUpgradePreservesSceneAndIsIdempotent" methodname="StoryUpgradePreservesSceneAndIsIdempotent" classname="JackSmokeTests" runstate="Runnable" seed="1135051500" result="Passed" start-time="2026-10-25 16:09:09Z" end-time="2026-10-25 16:09:10Z" duration="0.744493" asserts="0">
           <properties />
-          <output><![CDATA[Before scene changes, saved backup: Documentation/SceneBackups/JackGame-20261025-144755-8500270.unity
+          <output><![CDATA[Before scene changes, saved backup: Documentation/SceneBackups/JackGame-20261025-160910-1589190.unity
 Story upgrade complete. Existing gameplay/UI objects and API settings were preserved. A scene backup is in Documentation/SceneBackups.
-Before scene changes, saved backup: Documentation/SceneBackups/JackGame-20261025-144755-8866410.unity
+Before scene changes, saved backup: Documentation/SceneBackups/JackGame-20261025-160910-2029700.unity
 Story upgrade complete. Existing gameplay/UI objects and API settings were preserved. A scene backup is in Documentation/SceneBackups.
 ]]></output>
         </test-case>
-        <test-case id="1003" name="WatchedStoryReachesEndingAndGuardsMilestones" fullname="JackSmokeTests.WatchedStoryReachesEndingAndGuardsMilestones" methodname="WatchedStoryReachesEndingAndGuardsMilestones" classname="JackSmokeTests" runstate="Runnable" seed="302991350" result="Passed" start-time="2026-10-25 14:47:56Z" end-time="2026-10-25 14:48:04Z" duration="8.764900" asserts="0">
+        <test-case id="1003" name="WatchedStoryReachesEndingAndGuardsMilestones" fullname="JackSmokeTests.WatchedStoryReachesEndingAndGuardsMilestones" methodname="WatchedStoryReachesEndingAndGuardsMilestones" classname="JackSmokeTests" runstate="Runnable" seed="432101645" result="Passed" start-time="2026-10-25 16:09:10Z" end-time="2026-10-25 16:09:21Z" duration="11.468396" asserts="0">
           <properties>
             <property name="_JOINTYPE" value="UnityCombinatorial" />
             <property name="retryIteration" value="0" />
             <property name="repeatIteration" value="0" />
           </properties>
-          <output><![CDATA[Before scene changes, saved backup: Documentation/SceneBackups/JackGame-20261025-144756-0226630.unity
+          <output><![CDATA[Before scene changes, saved backup: Documentation/SceneBackups/JackGame-20261025-160910-3652330.unity
 Story upgrade complete. Existing gameplay/UI objects and API settings were preserved. A scene backup is in Documentation/SceneBackups.
 Saving results to: /Users/gurmo/Library/Application Support/DefaultCompany/HackTX26/TestResults.xml
 ]]></output>

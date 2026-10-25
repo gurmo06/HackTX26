@@ -28,6 +28,7 @@ namespace JackGame
                     if(!e) return false;
                     e.size=Mathf.Clamp(a.numberValue==0 ? 1 : a.numberValue,.5f,2.5f);
                     e.climbable=a.archetype=="ladder" || a.archetype=="rope" || a.archetype=="platform";
+                    if(e.climbable) e.stability=.25f;
                     e.Refresh(); return true;
                 case "modify":
                     if(!e) return false;
@@ -46,7 +47,8 @@ namespace JackGame
                     // Replace owned generated objects; mandatory story objects retain their identity.
                     var position=e.transform.position; var id=e.id;
                     world.Remove(e); e=world.Spawn(id,a.archetype,Label(a.value),position);
-                    if(!e) return false; e.climbable=a.archetype=="ladder" || a.archetype=="rope" || a.archetype=="platform"; e.Refresh(); return true;
+                    if(!e) return false; e.climbable=a.archetype=="ladder" || a.archetype=="rope" || a.archetype=="platform";
+                    if(e.climbable) e.stability=.25f; e.Refresh(); return true;
                 case "move":
                     if(!e || (a.property!="x" && a.property!="y")) return false;
                     var p=e.transform.position;

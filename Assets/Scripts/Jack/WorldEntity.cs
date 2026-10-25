@@ -20,22 +20,33 @@ namespace JackGame
         bool initialized;
         Coroutine appearance;
         [Range(0,.1f)] public float idleAmount=.025f;
+        // Presentation settings are separate from the validated gameplay size/stability.
+        [HideInInspector] public bool uprightBeanstalk;
+        [HideInInspector] public float presentationHeight, unstableSwayDegrees=4, swayDistance=.08f, swaySpeed=2.4f;
+        [HideInInspector] public float layoutScale=1;
+        public float LayoutWidth { get {
+            float h=Mathf.Max(RenderHeight,visual.sprite.bounds.size.y*renderScale.y);
+            float w=h*visual.sprite.bounds.size.x/Mathf.Max(.01f,visual.sprite.bounds.size.y);
+            return uprightBeanstalk ? w+2*h*Mathf.Sin(unstableSwayDegrees*Mathf.Deg2Rad)+2*swayDistance+.1f
+                : stability<.5f || Mathf.Abs(renderAngle)>.1f ? Mathf.Sqrt(w*w+h*h)+.1f : w+.1f;
+        } }
+        float RenderHeight => uprightBeanstalk ? presentationHeight*size/1.5f : Mathf.Min(4.2f,baseHeight*size);
         public WorldSnapshot Snapshot() => new WorldSnapshot { id=id, archetype=archetype, state=state, x=transform.position.x, y=transform.position.y, size=size, stability=stability, climbable=climbable, locked=locked, visible=visible };
         public void Refresh()
         {
             var bounds = visual.sprite.bounds.size;
-            Vector3 targetScale=Vector3.one*(Mathf.Min(4.2f,baseHeight*size)/Mathf.Max(.01f,bounds.y));
-            float targetAngle=stability<.5f ? -68 : 0;
+            Vector3 targetScale=Vector3.one*(RenderHeight/Mathf.Max(.01f,bounds.y));
+            float targetAngle=stability<.5f && !uprightBeanstalk ? -68 : 0;
             Color targetColor=locked ? new Color(.7f,.49f,.35f) : stability<.5f ? new Color(1,.82f,.65f) : Color.white;
             if(appearance!=null) StopCoroutine(appearance);
             if(initialized && Application.isPlaying && visible) appearance=StartCoroutine(EaseAppearance(targetScale,targetAngle,targetColor));
             else { renderScale=targetScale; renderAngle=targetAngle; renderColor=targetColor; }
             initialized=true; visual.enabled=visible;
             hitbox.enabled = visible;
-            hitbox.size = new Vector2(Mathf.Max(0.5f, bounds.x * targetScale.x), Mathf.Min(4,baseHeight*size));
-            hitbox.offset=new Vector2(0,(Mathf.Min(4.2f,baseHeight*size)-baseHeight)/2);
-            label.text = displayName + (climbable ? " · climbable" : "") + (stability < 0.5f ? " · fallen" : "") + (locked ? " · locked" : "");
-            label.gameObject.SetActive(visible);
+            hitbox.size = new Vector2(Mathf.Max(0.5f, bounds.x * targetScale.x), RenderHeight);
+            hitbox.offset=new Vector2(0,(RenderHeight-baseHeight)/2);
+            label.text = displayName + (climbable ? " · climbable" : "") + (stability < 0.5f ? (uprightBeanstalk ? " · unstable" : " · fallen") : "") + (locked ? " · locked" : "");
+            label.gameObject.SetActive(false);
             label.transform.localPosition = new Vector3(0, -Mathf.Min(1f,baseHeight*size/2)+0.05f, 0);
         }
         IEnumerator EaseAppearance(Vector3 scale,float angle,Color color)
@@ -57,16 +68,30 @@ namespace JackGame
             connectedTo = other;
             if (!connection) { connection = gameObject.AddComponent<LineRenderer>(); connection.sharedMaterial=material; connection.startWidth=connection.endWidth=0.06f; connection.positionCount=2; connection.sortingOrder=6; connection.startColor=connection.endColor=new Color(0.8f,0.6f,0.3f); }
         }
-        void LateUpdate()
+        void LateUpdate() => RenderPose();
+        public void RenderPose()
         {
             if(visual && initialized) {
                 float wave=Mathf.Sin(Time.unscaledTime*(state=="sleeping" ? 1.4f : 2.4f));
                 float breathe=state=="sleeping" ? 1+wave*idleAmount : 1;
-                visual.transform.localScale=new Vector3(renderScale.x,renderScale.y*breathe,renderScale.z);
-                float rise=(Mathf.Min(4.2f,baseHeight*size)*breathe-baseHeight)/2;
+                visual.transform.localScale=new Vector3(renderScale.x,renderScale.y*breathe,renderScale.z)*layoutScale;
+                float rise=(visual.sprite.bounds.size.y*renderScale.y*layoutScale*breathe-baseHeight)/2;
                 visual.transform.localPosition=new Vector3(0,rise+(archetype=="goose" ? Mathf.Abs(wave)*idleAmount*2 : 0),0);
                 visual.transform.localRotation=Quaternion.Euler(0,0,renderAngle+(archetype=="beanstalk" ? wave*1.1f : 0));
+                if(uprightBeanstalk) {
+                    float wobble=Mathf.Sin(Time.unscaledTime*swaySpeed);
+                    float unrest=1-Mathf.Clamp01(stability);
+                    var rotation=Quaternion.Euler(0,0,wobble*unstableSwayDegrees*unrest);
+                    // Rotate around the root, keeping the overlay attached to the painted stalk.
+                    visual.transform.localRotation=rotation;
+                    visual.transform.localPosition=Vector3.down*(baseHeight/2)+rotation*Vector3.up*(visual.sprite.bounds.size.y*renderScale.y*layoutScale/2)
+                        +Vector3.right*(wobble*swayDistance*unrest);
+                }
                 visual.color=renderColor;
+                // The clickable area follows the displayed cutout after spacing/scaling.
+                var drawn=visual.bounds;
+                hitbox.size=drawn.size;
+                hitbox.offset=transform.InverseTransformPoint(drawn.center);
             }
             if (!connection) return;
             connection.enabled = connectedTo && visible && connectedTo.visible;
