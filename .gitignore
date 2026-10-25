@@ -26,3 +26,14 @@ UserSettings/
 *.VC.db
 
 .vsconfig
+node_modules
+
+# Jack narrator backend and exported Unity player
+node_modules/
+.netlify/
+.env
+.env.*
+!.env.example
+web-build/*
+!web-build/.gitkeep
+npm-debug.log*

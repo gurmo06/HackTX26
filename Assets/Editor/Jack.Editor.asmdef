@@ -1,0 +1,6 @@
+{
+  "name": "Jack.Editor",
+  "references": ["Jack.Runtime", "Unity.TextMeshPro", "Unity.ugui", "Unity.InputSystem", "Unity.RenderPipelines.Universal.Runtime"],
+  "includePlatforms": ["Editor"],
+  "autoReferenced": true
+}

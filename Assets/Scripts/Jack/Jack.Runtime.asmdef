@@ -1,0 +1,6 @@
+{
+  "name": "Jack.Runtime",
+  "rootNamespace": "JackGame",
+  "references": ["Unity.TextMeshPro", "Unity.ugui", "Unity.InputSystem"],
+  "autoReferenced": true
+}

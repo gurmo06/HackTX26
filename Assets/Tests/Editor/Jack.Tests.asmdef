@@ -1,0 +1,7 @@
+{
+  "name": "Jack.Tests",
+  "references": ["Jack.Runtime", "Jack.Editor", "Unity.TextMeshPro", "Unity.ugui"],
+  "includePlatforms": ["Editor"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false
+}

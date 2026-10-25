@@ -1,0 +1,22 @@
+{
+  "name": "jack-and-the-unreliable-narrator",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "dev": "netlify dev",
+    "test": "node --test tests/*.test.mjs",
+    "serve:mock": "node --env-file=.env scripts/dev-server.mjs",
+    "models": "node --env-file=.env scripts/list-models.mjs"
+  },
+  "dependencies": {
+    "@google/genai": "^1.0.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "netlify-cli": "^27.14.2"
+  }
+}

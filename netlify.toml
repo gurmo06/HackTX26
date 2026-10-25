@@ -1,0 +1,31 @@
+[build]
+  publish = "web-build"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  node_bundler = "esbuild"
+
+[dev]
+  framework = "#static"
+  publish = "web-build"
+  port = 8888
+  autoLaunch = false
+
+[[redirects]]
+  from = "/api/narrate"
+  to = "/.netlify/functions/narrate"
+  status = 200
+  force = true
+
+[[headers]]
+  for = "/Build/*.wasm"
+  [headers.values]
+    Content-Type = "application/wasm"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"

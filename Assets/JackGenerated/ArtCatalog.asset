@@ -1,0 +1,76 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 00ee6a0fd5bb449ca8098a54ec1d53c2, type: 3}
+  m_Name: ArtCatalog
+  m_EditorClassIdentifier: Jack.Runtime::JackGame.ArtCatalog
+  entries:
+  - key: 01_Merchant_Village_Post_Beanstalk
+    sprite: {fileID: 21300000, guid: 7361e11b95c2849c2bac11d574027a10, type: 3}
+  - key: 02_Beanstalk_Climbing
+    sprite: {fileID: 21300000, guid: bdaabfccf8e6b48b7a98fe9b382fe75d, type: 3}
+  - key: 03_Giant_Castle
+    sprite: {fileID: 21300000, guid: 02911335b722f477996fc874a9b10ef5, type: 3}
+  - key: 04_NightEscape
+    sprite: {fileID: 21300000, guid: e78b55de75b204fc1a5bcee1789717d6, type: 3}
+  - key: cow
+    sprite: {fileID: 21300000, guid: 107789541675d4c92a9ecf9633954a16, type: 3}
+  - key: giant
+    sprite: {fileID: 21300000, guid: 81936206f6aaf4d77855111e5c22b9fe, type: 3}
+  - key: golden_goose
+    sprite: {fileID: 21300000, guid: 9275d7017da2244098d9de0778dc3391, type: 3}
+  - key: jack_climb
+    sprite: {fileID: 21300000, guid: bbe8885600ec7467d936bd52f8d31eb3, type: 3}
+  - key: jack_idle
+    sprite: {fileID: 21300000, guid: e45ee3949bf584a5ea80348184fd3cfa, type: 3}
+  - key: jack_walk1
+    sprite: {fileID: 21300000, guid: 666f0aaf7bc9948f4a53ac604369635a, type: 3}
+  - key: jack_walk2
+    sprite: {fileID: 21300000, guid: c8ce2bbdb05e24a8da6652c404897881, type: 3}
+  - key: merchant
+    sprite: {fileID: 21300000, guid: f8f19ce8d307d4463a9997b2c92fc07f, type: 3}
+  - key: BeanIcon
+    sprite: {fileID: 21300000, guid: 23eeace7929b141ceaa5c84ffcc528fa, type: 3}
+  - key: EggIcon
+    sprite: {fileID: 21300000, guid: 7525b0a6cebb94a4a85461cdf5bcdf3e, type: 3}
+  - key: beanstalk_segment
+    sprite: {fileID: 21300000, guid: e23fb7ae668534a338e4d0cb7612b7c1, type: 3}
+  - key: cloud_castle
+    sprite: {fileID: 21300000, guid: 27d3f2b081ed54a10a49da3f3c0c19b6, type: 3}
+  - key: cloud_platform
+    sprite: {fileID: 21300000, guid: afebbdf280bb940a796571682c65f74f, type: 3}
+  - key: cottage
+    sprite: {fileID: 21300000, guid: 66631cffbabe64c3baf359bc1a1d51a3, type: 3}
+  - key: crate
+    sprite: {fileID: 21300000, guid: 071c2557f44774839b0ffb26e82af5a4, type: 3}
+  - key: golden_egg_sack
+    sprite: {fileID: 21300000, guid: 76acff690b5f7496ca64588041200739, type: 3}
+  - key: golden_egg
+    sprite: {fileID: 21300000, guid: 53305046eb0ec4ee0bf5bf5e8bc9555e, type: 3}
+  - key: ladder
+    sprite: {fileID: 21300000, guid: de2372b45839c4706934b37428162931, type: 3}
+  - key: market_stall
+    sprite: {fileID: 21300000, guid: c0b34992add2645748e2d30833c240af, type: 3}
+  - key: rope
+    sprite: {fileID: 21300000, guid: 6accc660e30034ef69769dc1a43f4816, type: 3}
+  - key: stone_block
+    sprite: {fileID: 21300000, guid: af6ba68e34d8d4e0fb134a5fef461e14, type: 3}
+  - key: wooden_platform
+    sprite: {fileID: 21300000, guid: 788c27d6d322b4182914f6926ca61097, type: 3}
+  - key: ParchmentButton
+    sprite: {fileID: 21300000, guid: 774d30992089a4bf6811e4c7055cd2b4, type: 3}
+  - key: ParchmentDialoguePanel
+    sprite: {fileID: 21300000, guid: c5bce5cfc6acb4fdf91d233224547d0a, type: 3}
+  - key: ParchmentInput
+    sprite: {fileID: 21300000, guid: d30442cb16e244a57950da3b28c90244, type: 3}
+  bodyFont: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  headingFont: {fileID: 11400000, guid: 5526ffff8cb504c179f51f26abffc62d, type: 2}
+  worldMaterial: {fileID: 2100000, guid: 272e79acbe0bd4fdfbdecd2a08fb5260, type: 2}

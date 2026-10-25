@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="2" result="Passed" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-25 13:19:43Z" end-time="2026-10-25 13:19:53Z" duration="10.3662069">
+  <test-suite type="TestSuite" id="1000" name="HackTX26" fullname="HackTX26" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-25 13:19:43Z" end-time="2026-10-25 13:19:53Z" duration="10.366207" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1004" name="Jack.Tests.dll" fullname="/private/var/folders/rb/8qjsyhws5k1gr7l3g_n79lc00000gn/T/jack-unity-check-y0i2pdlj/Library/ScriptAssemblies/Jack.Tests.dll" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-25 13:19:43Z" end-time="2026-10-25 13:19:53Z" duration="10.361763" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="54083" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestFixture" id="1001" name="JackSmokeTests" fullname="JackSmokeTests" classname="JackSmokeTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-25 13:19:43Z" end-time="2026-10-25 13:19:53Z" duration="10.361067" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1003" name="OfflineStoryReachesVictoryAndRestarts" fullname="JackSmokeTests.OfflineStoryReachesVictoryAndRestarts" methodname="OfflineStoryReachesVictoryAndRestarts" classname="JackSmokeTests" runstate="Runnable" seed="1117975458" result="Passed" start-time="2026-10-25 13:19:43Z" end-time="2026-10-25 13:19:50Z" duration="7.495795" asserts="0">
+          <properties>
+            <property name="_JOINTYPE" value="UnityCombinatorial" />
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[JackGame created/refreshed. Runtime actors populate on Play. Art: 29/29. UseMockNarrator=True. See Documentation/UNITY_MANUAL_STEPS.md.
+JackGame created/refreshed. Runtime actors populate on Play. Art: 29/29. UseMockNarrator=True. See Documentation/UNITY_MANUAL_STEPS.md.
+]]></output>
+        </test-case>
+        <test-case id="1002" name="SceneBuilderIsIdempotentAndWired" fullname="JackSmokeTests.SceneBuilderIsIdempotentAndWired" methodname="SceneBuilderIsIdempotentAndWired" classname="JackSmokeTests" runstate="Runnable" seed="885684184" result="Passed" start-time="2026-10-25 13:19:50Z" end-time="2026-10-25 13:19:53Z" duration="2.855640" asserts="0">
+          <properties>
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[JackGame created/refreshed. Runtime actors populate on Play. Art: 29/29. UseMockNarrator=True. See Documentation/UNITY_MANUAL_STEPS.md.
+JackGame created/refreshed. Runtime actors populate on Play. Art: 29/29. UseMockNarrator=True. See Documentation/UNITY_MANUAL_STEPS.md.
+JackGame created/refreshed. Runtime actors populate on Play. Art: 29/29. UseMockNarrator=True. See Documentation/UNITY_MANUAL_STEPS.md.
+JackGame created/refreshed. Runtime actors populate on Play. Art: 29/29. UseMockNarrator=True. See Documentation/UNITY_MANUAL_STEPS.md.
+Saving results to: /Users/gurmo/Library/Application Support/DefaultCompany/HackTX26/TestResults.xml
+Saving results to: /Users/gurmo/Library/Application Support/DefaultCompany/HackTX26/TestResults.xml
+]]></output>
+        </test-case>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

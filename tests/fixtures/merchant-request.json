@@ -1,0 +1,63 @@
+{
+  "sessionId": "demo-curl-check",
+  "levelId": "merchant",
+  "playerText": "Trade my cow for real magic beans.",
+  "turnNumber": 1,
+  "consecutiveSetbacks": 0,
+  "activeChallengeId": "",
+  "challengeSolved": false,
+  "inventory": [
+    "cow"
+  ],
+  "worldEntities": [
+    {
+      "id": "stall",
+      "archetype": "stall",
+      "state": "ready",
+      "x": 0,
+      "y": 0,
+      "size": 1,
+      "stability": 1,
+      "climbable": false,
+      "locked": false,
+      "visible": true
+    },
+    {
+      "id": "merchant",
+      "archetype": "npc",
+      "state": "ready",
+      "x": 0,
+      "y": 0,
+      "size": 1,
+      "stability": 1,
+      "climbable": false,
+      "locked": false,
+      "visible": true
+    },
+    {
+      "id": "cow",
+      "archetype": "cow",
+      "state": "ready",
+      "x": 0,
+      "y": 0,
+      "size": 1,
+      "stability": 1,
+      "climbable": false,
+      "locked": false,
+      "visible": true
+    },
+    {
+      "id": "beans",
+      "archetype": "beans",
+      "state": "ready",
+      "x": 0,
+      "y": 0,
+      "size": 1,
+      "stability": 1,
+      "climbable": false,
+      "locked": false,
+      "visible": true
+    }
+  ],
+  "recentHistory": []
+}
